@@ -44,6 +44,12 @@
     <button id="setLocationBtn">📍 Set Target Location</button>
 
     <a-scene
+      reflection="directionalLight: a-light[type=directional]"
+      ar-hit-test="target: #objects;"
+      renderer="colorManagement: true; exposure: 1; toneMapping: ACESFilmic"
+      shadow="type: pcfsoft"
+      xr-mode-ui="XRMode: xr"
+
       embedded
       arjs="sourceType: webcam; debugUIEnabled: false;"
       vr-mode-ui="enabled: false"
