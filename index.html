@@ -5,11 +5,28 @@
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@master/aframe/build/aframe-ar.js"></script>
   </head>
   <body style="margin: 0; overflow: hidden;">
-    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: true;">
-      <a-marker type="pattern" url="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/data/patt.hiro">
-        <a-box position="0 0.5 0" material="color: red;"></a-box>
-      </a-marker>
-      <a-entity camera></a-entity>
-    </a-scene>
-  </body>
+  <button id="startAR"
+    style="position:absolute;top:0;left:0;width:100%;height:100%;font-size:2em;">
+    Tap to start AR
+  </button>
+
+  <a-scene
+    id="scene"
+    embedded
+    arjs="sourceType: webcam; debugUIEnabled: false;"
+    style="display:none"
+  >
+    <a-marker type="pattern" url="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/data/patt.hiro">
+      <a-box position="0 0.5 0" material="color: red;"></a-box>
+    </a-marker>
+    <a-entity camera></a-entity>
+  </a-scene>
+
+  <script>
+    document.getElementById('startAR').onclick = () => {
+      document.getElementById('startAR').style.display = 'none';
+      document.getElementById('scene').style.display = 'block';
+    };
+  </script>
+</body>
 </html>
