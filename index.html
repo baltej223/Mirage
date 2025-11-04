@@ -1,20 +1,19 @@
-
 <!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Hello, AR World! • A-Frame</title>
+    <title>Marker + Geo AR</title>
     <meta name="description" content="Hello, AR World! • A-Frame">
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.2/aframe/build/aframe-ar.js"></script>
     <script>
       AFRAME.registerComponent('follow-shadow', {
-        schema: {type: 'selector'},
-        init() {this.el.object3D.renderOrder = -1;},
+        schema: { type: 'selector' },
+        init() { this.el.object3D.renderOrder = -1; },
         tick() {
           if (this.data) {
             this.el.object3D.position.copy(this.data.object3D.position);
-            this.el.object3D.position.y-=0.001; // stop z-fighting
+            this.el.object3D.position.y -= 0.001; // stop z-fighting
           }
         }
       });
@@ -22,73 +21,66 @@
   </head>
   <body>
     <a-scene
-      reflection="directionalLight: a-light[type=directional]"
-      ar-hit-test="target: #objects;"
-      renderer="colorManagement: true; exposure: 1; toneMapping: ACESFilmic"
-      shadow="type: pcfsoft"
-      xr-mode-ui="XRMode: xr"
       embedded
-    arjs="sourceType: webcam; debugUIEnabled: false;"
+      arjs="sourceType: webcam; debugUIEnabled: false;"
     >
-      <!-- <a-light type="directional" light="castShadow:true;" position="1 1 1" intensity="1.57" shadow-camera-automatic="#objects"></a-light>
-      <a-camera position="0 0.4 0" wasd-controls="acceleration:10;"></a-camera>
-      <a-entity id="objects" scale="0.2 0.2 0.2" position="0 0 -1" shadow>
-        <a-box position="-1 0.5 1" rotation="0 45 0" color="#4CC3D9"></a-box>
-        <a-sphere position="0 1.25 -1" radius="1.25" color="#EF2D5E"></a-sphere>
-        <a-cylinder position="1 0.75 1" radius="0.5" height="1.5" color="#FFC65D"></a-cylinder>
-      </a-entity>
-      <a-plane follow-shadow="#objects" material="shader:shadow" shadow="cast:false;" rotation="-90 0 0" width="2" height="2"></a-plane>
-      <a-sky color="#ECECEC" hide-on-enter-ar></a-sky> -->
-
       <a-marker preset="hiro">
-        <!-- <a-entity
-          gltf-model="url(models/scene.glb)"
-          scale="0.3 0.3 0.3"
-          rotation="0 180 0"
-        ></a-entity> -->
-          <a-box position="0 0.5 0" material="color: red;"></a-box>
+        <a-box id="geo-cube" position="0 0.5 0" color="red" visible="false"></a-box>
       </a-marker>
       <a-entity camera></a-entity>
-
     </a-scene>
-  <script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"92be57dc94774deb822e7e84255b27f9","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
-  <script>
-  // 🎯 Replace these with your target coordinates
-  const targetLat = 30.354068; // Example: Thapar University
-  const targetLon = 76.368439;
-  const threshold = 5; // meters within which cube appears
 
-  const cube = document.querySelector('a-box');
+    <script>
+      // 🎯 Target location (change to your own)
+      const targetLat = 30.3515;
+      const targetLon = 76.3630;
+      const threshold = 100; // meters
 
-  // Distance function (Haversine formula)
-  function getDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371000;
-    const toRad = deg => deg * Math.PI / 180;
-    const dLat = toRad(lat2 - lat1);
-    const dLon = toRad(lon2 - lon1);
-    const a = Math.sin(dLat/2)**2 +
-              Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-              Math.sin(dLon/2)**2;
-    return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  }
+      const cube = document.getElementById("geo-cube");
 
-  if (navigator.geolocation) {
-    navigator.geolocation.watchPosition(pos => {
-      const { latitude, longitude } = pos.coords;
-      const distance = getDistance(latitude, longitude, targetLat, targetLon);
-
-      console.log(`📍 Distance: ${Math.round(distance)} meters`);
-
-      if (distance < threshold) {
-        cube.setAttribute('visible', true);
-      } else {
-        cube.setAttribute('visible', false);
+      // 🌍 Haversine distance formula
+      function getDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371000; // Earth radius in meters
+        const toRad = deg => deg * Math.PI / 180;
+        const dLat = toRad(lat2 - lat1);
+        const dLon = toRad(lon2 - lon1);
+        const a =
+          Math.sin(dLat / 2) ** 2 +
+          Math.cos(toRad(lat1)) *
+            Math.cos(toRad(lat2)) *
+            Math.sin(dLon / 2) ** 2;
+        return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       }
-    }, err => console.error(err), { enableHighAccuracy: true });
-  } else {
-    alert("Geolocation not supported by this browser.");
-  }
-</script>
 
-</body>
+      // 🚀 Function to check location periodically
+      function checkLocation() {
+        if (!navigator.geolocation) {
+          alert("Geolocation not supported on this device.");
+          return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const { latitude, longitude } = pos.coords;
+            const dist = getDistance(latitude, longitude, targetLat, targetLon);
+            console.log(`📍 Distance: ${Math.round(dist)} m`);
+
+            if (dist <= threshold) {
+              cube.setAttribute("visible", true);
+            } else {
+              cube.setAttribute("visible", false);
+            }
+          },
+          (err) => console.error(err),
+          { enableHighAccuracy: true }
+        );
+      }
+
+      // 🔁 Check every 5 seconds (you can change this)
+      setInterval(checkLocation, 5000);
+
+      // Do an immediate check on load
+      checkLocation();
+    </script>
+  </body>
 </html>
