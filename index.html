@@ -19,22 +19,32 @@
       });
     </script>
         <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+      }
+
+      /* 🧭 Force button to stay on top of AR view */
       #setLocationBtn {
-        position: absolute;
-        top: 10px;
+        position: fixed;
+        top: 16px;
         left: 50%;
         transform: translateX(-50%);
-        padding: 10px 16px;
+        padding: 12px 20px;
         font-size: 16px;
         background: #ff4444;
         color: white;
         border: none;
-        border-radius: 8px;
+        border-radius: 10px;
         cursor: pointer;
-        z-index: 9999;
+        z-index: 999999; /* 👈 highest priority */
+        pointer-events: auto;
+        opacity: 0.9;
       }
+
       #setLocationBtn:disabled {
         background: #888;
+        opacity: 0.7;
         cursor: not-allowed;
       }
     </style>
