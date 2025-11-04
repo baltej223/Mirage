@@ -1,52 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-        <!-- A-Frame + AR.js -->
-    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@master/aframe/build/aframe-ar.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AR.js Pattern Marker Example</title>
 
-    <!-- Tailwind for styling -->
-    <script src="https://cdn.tailwindcss.com"></script>
+  <!-- A-Frame + AR.js -->
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@master/aframe/build/aframe-ar.js"></script>
 
-
+  <!-- Tailwind (optional, for styling) -->
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body style="margin : 0px; overflow: hidden;">
-  <!-- minimal loader shown until image descriptors are loaded. Loading may take a while according to the device computational power -->
+<body style="margin: 0; overflow: hidden;">
+
   <div class="arjs-loader">
     <div>Loading, please wait...</div>
   </div>
 
-  <!-- a-frame scene -->
   <a-scene
-    vr-mode-ui="enabled: false;"
-    renderer="logarithmicDepthBuffer: true;"
     embedded
-    arjs="trackingMethod: best; sourceType: webcam;debugUIEnabled: false;"
+    arjs="sourceType: webcam; debugUIEnabled: false;"
   >
-    <!-- a-nft is the anchor that defines an Image Tracking entity -->
-    <!-- on 'url' use the path to the Image Descriptors created before. -->
-    <!-- the path should end with the name without the extension e.g. if file is 'pinball.fset' the path should end with 'pinball' -->
-    <a-nft
-      type="nft"
-      url="<path-to-your-image-descriptors>"
-      smooth="true"
-      smoothCount="10"
-      smoothTolerance=".01"
-      smoothThreshold="5"
-    >
-      <!-- as a child of the a-nft entity, you can define the content to show. here's a GLTF model entity -->
+
+    <!-- Pattern marker (replace with your file path) -->
+    <a-marker type="pattern" url="path/to/your-marker.patt">
+      <!-- 3D model -->
       <a-entity
-        gltf-model="<path-to-your-model>"
-        scale="5 5 5"
-        position="50 150 0"
-      >
-      </a-entity>
-    </a-nft>
-    <!-- static camera that moves according to the device movemenents -->
+        gltf-model="path/to/your-model.glb"
+        scale="0.5 0.5 0.5"
+        position="0 0 0"
+      ></a-entity>
+    </a-marker>
+
+    <!-- Camera -->
     <a-entity camera></a-entity>
+
   </a-scene>
 </body>
 </html>
