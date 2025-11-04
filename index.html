@@ -6,6 +6,7 @@
     <title>Hello, AR World! • A-Frame</title>
     <meta name="description" content="Hello, AR World! • A-Frame">
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.2/aframe/build/aframe-ar.js"></script>
     <script>
       AFRAME.registerComponent('follow-shadow', {
         schema: {type: 'selector'},
@@ -26,8 +27,10 @@
       renderer="colorManagement: true; exposure: 1; toneMapping: ACESFilmic"
       shadow="type: pcfsoft"
       xr-mode-ui="XRMode: xr"
+      embedded
+    arjs="sourceType: webcam; debugUIEnabled: false;"
     >
-      <a-light type="directional" light="castShadow:true;" position="1 1 1" intensity="1.57" shadow-camera-automatic="#objects"></a-light>
+      <!-- <a-light type="directional" light="castShadow:true;" position="1 1 1" intensity="1.57" shadow-camera-automatic="#objects"></a-light>
       <a-camera position="0 0.4 0" wasd-controls="acceleration:10;"></a-camera>
       <a-entity id="objects" scale="0.2 0.2 0.2" position="0 0 -1" shadow>
         <a-box position="-1 0.5 1" rotation="0 45 0" color="#4CC3D9"></a-box>
@@ -35,7 +38,18 @@
         <a-cylinder position="1 0.75 1" radius="0.5" height="1.5" color="#FFC65D"></a-cylinder>
       </a-entity>
       <a-plane follow-shadow="#objects" material="shader:shadow" shadow="cast:false;" rotation="-90 0 0" width="2" height="2"></a-plane>
-      <a-sky color="#ECECEC" hide-on-enter-ar></a-sky>
+      <a-sky color="#ECECEC" hide-on-enter-ar></a-sky> -->
+
+      <a-marker preset="hiro">
+        <!-- <a-entity
+          gltf-model="url(models/scene.glb)"
+          scale="0.3 0.3 0.3"
+          rotation="0 180 0"
+        ></a-entity> -->
+          <a-box position="0 0.5 0" material="color: red;"></a-box>
+      </a-marker>
+      <a-entity camera></a-entity>
+
     </a-scene>
   <script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"92be57dc94774deb822e7e84255b27f9","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
