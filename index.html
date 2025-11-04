@@ -13,11 +13,31 @@
         tick() {
           if (this.data) {
             this.el.object3D.position.copy(this.data.object3D.position);
-            this.el.object3D.position.y -= 0.001; // stop z-fighting
+            this.el.object3D.position.y -= 0.001;
           }
         }
       });
     </script>
+        <style>
+      #setLocationBtn {
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 10px 16px;
+        font-size: 16px;
+        background: #ff4444;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        z-index: 9999;
+      }
+      #setLocationBtn:disabled {
+        background: #888;
+        cursor: not-allowed;
+      }
+    </style>
   </head>
   <body>
     <a-scene
@@ -31,17 +51,17 @@
     </a-scene>
 
     <script>
-      // 🎯 Target location (change to your own)
-      const targetLat = 30.354068;
-      const targetLon = 76.368439;
-      const threshold = 10; // meters
-
       const cube = document.getElementById("geo-cube");
+      const btn = document.getElementById("setLocationBtn");
+
+      let targetLat = null;
+      let targetLon = null;
+      const threshold = 10; // meters
 
       // 🌍 Haversine distance formula
       function getDistance(lat1, lon1, lat2, lon2) {
-        const R = 6371000; // Earth radius in meters
-        const toRad = deg => deg * Math.PI / 180;
+        const R = 6371000;
+        const toRad = (deg) => (deg * Math.PI) / 180;
         const dLat = toRad(lat2 - lat1);
         const dLon = toRad(lon2 - lon1);
         const a =
@@ -52,35 +72,49 @@
         return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       }
 
-      // 🚀 Function to check location periodically
-      function checkLocation() {
+      // 🎯 Function to set target location
+      btn.addEventListener("click", () => {
         if (!navigator.geolocation) {
           alert("Geolocation not supported on this device.");
           return;
         }
 
+        btn.textContent = "Setting...";
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            targetLat = pos.coords.latitude;
+            targetLon = pos.coords.longitude;
+            btn.textContent = "✅ Location Set";
+            btn.disabled = true;
+            console.log(`🎯 Target location set to: ${targetLat}, ${targetLon}`);
+            // Start periodic location checks
+            checkLocation();
+            setInterval(checkLocation, 5000);
+          },
+          (err) => {
+            console.error(err);
+            btn.textContent = "❌ Failed to Set Location";
+          },
+          { enableHighAccuracy: true }
+        );
+      });
+
+      // 🚀 Function to check current distance
+      function checkLocation() {
+        if (targetLat === null || targetLon === null) return;
+
         navigator.geolocation.getCurrentPosition(
           (pos) => {
             const { latitude, longitude } = pos.coords;
             const dist = getDistance(latitude, longitude, targetLat, targetLon);
-            console.log(`📍 Distance: ${Math.round(dist)} m`);
+            console.log(`📍 Distance from target: ${Math.round(dist)} m`);
 
-            if (dist <= threshold) {
-              cube.setAttribute("visible", true);
-            } else {
-              cube.setAttribute("visible", false);
-            }
+            cube.setAttribute("visible", dist <= threshold);
           },
           (err) => console.error(err),
           { enableHighAccuracy: true }
         );
       }
-
-      // 🔁 Check every 5 seconds (you can change this)
-      setInterval(checkLocation, 5000);
-
-      // Do an immediate check on load
-      checkLocation();
     </script>
   </body>
 </html>
