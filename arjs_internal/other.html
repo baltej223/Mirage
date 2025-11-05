@@ -16,12 +16,32 @@
   </head>
 
   <body style="margin: 0; overflow: hidden;">
+
+        <button
+      id="placeCubeBtn"
+      style="
+        position: absolute;
+        z-index: 2;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 10px 20px;
+        font-size: 16px;
+        background: #ff4444;
+        color: white;
+        border: none;
+        border-radius: 10px;
+      "
+    >
+      📦 Place Cube at My Location
+    </button>
+
     <a-scene
       vr-mode-ui="enabled: false"
       embedded
       arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false;"
     >
-      <a-camera gps-new-camera arjs-device-orientation-controls='smoothingFactor: 0.1'></a-camera>
+      <a-camera gps-new-camera rotation-reader></a-camera>
 
       <a-box
         gps-new-entity-place="latitude: 30.353912; longitude: 76.368568;"
@@ -29,5 +49,49 @@
         scale="1 1 1"
       ></a-box>
     </a-scene>
+
+    <script>
+      const button = document.getElementById('placeCubeBtn');
+      const scene = document.querySelector('a-scene');
+
+      button.addEventListener('click', () => {
+        if (!navigator.geolocation) {
+          alert('Geolocation is not supported by your device.');
+          return;
+        }
+
+        // Get current position
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+
+            console.log('Your location:', lat, lon);
+
+            // Create a new box element
+            const box = document.createElement('a-box');
+            box.setAttribute(
+              'gps-new-entity-place',
+              `latitude: ${lat}; longitude: ${lon};`
+            );
+            box.setAttribute('color', 'blue');
+            box.setAttribute('scale', '1 1 1');
+
+            // Add it to the scene
+            scene.appendChild(box);
+
+            // Feedback to user
+            button.innerText = '✅ Cube Placed!';
+            button.style.background = '#44aa44';
+          },
+          (err) => {
+            console.error('Error getting location:', err);
+            alert('Could not get your location. Please enable GPS and HTTPS.');
+          },
+          { enableHighAccuracy: true }
+        );
+      });
+    </script>
+    
   </body>
 </html>
