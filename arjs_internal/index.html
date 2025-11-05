@@ -6,6 +6,31 @@
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.2/aframe/build/aframe-ar.js"></script>
   </head>
+  <style>
+  #setLocationBtn {
+    position: fixed;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px 18px;
+    font-size: 16px;
+    background: #ff4444;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    z-index: 999999; /* 👈 ensures it stays above the AR canvas */
+    pointer-events: auto;
+    opacity: 0.9;
+  }
+
+  #setLocationBtn:disabled {
+    background: #888;
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+</style>
+
   <body style="margin: 0; overflow: hidden;">
     <button id="setLocationBtn">📍 Set Cube Here</button>
 
