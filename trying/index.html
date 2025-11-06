@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Geo-Triggered AR Cube</title>
+    <meta name="description" content="Geo-triggered AR cube example">
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.2/aframe/build/aframe-ar.js"></script>
+
+    </head>
+    <body>
+<a-scene
+  vr-mode-ui="enabled: false;"
+  embedded
+  arjs="sourceType: webcam; trackingMethod: best; debugUIEnabled: false;"
+>
+  <a-camera gps-camera rotation-reader></a-camera>
+
+  <!-- Marker -->
+  <a-marker type="pattern" url="marker.patt" id="baseMarker">
+    <a-box color="red" position="0 0.5 0"></a-box>
+  </a-marker>
+
+  <!-- Cube that appears at computed GPS position -->
+  <a-entity
+    id="remoteCube"
+    gps-entity-place="latitude: 0; longitude: 0"
+    geometry="primitive: box"
+    material="color: blue;"
+  ></a-entity>
+</a-scene>
+
+<script>
+navigator.geolocation.getCurrentPosition((pos) => {
+  const baseLat = pos.coords.latitude;
+  const baseLon = pos.coords.longitude;
+
+  // Example: cube 10m north and 5m east
+  const offsetLat = baseLat + (0 / 111111); // 1 deg lat ≈ 111,111 m
+  const offsetLon = baseLon + (2 / (111111 * Math.cos(baseLat * Math.PI / 180)));
+
+  const cube = document.getElementById("remoteCube");
+  cube.setAttribute("gps-entity-place", `latitude: ${offsetLat}; longitude: ${offsetLon}`);
+});
+</script>
+
+</body>
+</html>
