@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, user-scalable=no, initial-scale=1, minimum-scale=1, maximum-scale=1"
+    />
+    <title>LocAR.js – GPS and Sensors Example (Replicated)</title>
+
+    <!-- LocAR.js Core -->
+    <script type="module">
+      import {
+        PerspectiveCamera,
+        WebGLRenderer,
+        Scene,
+        GpsEntityManager,
+        CameraFeed,
+        DeviceOrientationControls,
+        BoxGeometry,
+        Mesh,
+        MeshBasicMaterial,
+      } from "https://ar-js-org.github.io/locar.js/assets/locar.es-8YGvHcXJ.js";
+
+      // --- CAMERA + RENDERER SETUP ---
+      const camera = new PerspectiveCamera(
+        80,
+        window.innerWidth / window.innerHeight,
+        0.001,
+        1000
+      );
+
+      const renderer = new WebGLRenderer({
+        canvas: document.getElementById("glscene"),
+      });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+
+      // --- SCENE & GPS MANAGER ---
+      const scene = new Scene();
+      const gpsManager = new GpsEntityManager(scene, camera);
+
+      // --- CAMERA FEED SETUP ---
+      const cameraFeed = new CameraFeed(
+        { video: { facingMode: "environment" } },
+        null
+      );
+
+      cameraFeed.on("webcamstarted", (e) => {
+        scene.background = e.texture;
+      });
+
+      cameraFeed.on("webcamerror", (e) => {
+        alert(`Webcam error: code ${e.code} message ${e.message}`);
+      });
+
+      // --- RESIZE HANDLER ---
+      window.addEventListener("resize", () => {
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+      });
+
+      // --- DEVICE ORIENTATION ---
+      const sensors = new DeviceOrientationControls(camera);
+      sensors.on("deviceorientationgranted", (e) => {
+        e.target.connect();
+      });
+      sensors.on("deviceorientationerror", (e) => {
+        alert(`Device orientation error: code ${e.code} message ${e.message}`);
+      });
+      sensors.init();
+
+      // --- GPS EVENTS ---
+      let firstFix = true;
+      gpsManager.on("gpserror", (e) => {
+        alert(`GPS error: ${e.code}`);
+      });
+
+      gpsManager.on("gpsupdate", (e) => {
+        if (firstFix) {
+          alert(
+            `Got the initial location:\nLongitude: ${e.position.coords.longitude}\nLatitude: ${e.position.coords.latitude}`
+          );
+
+          const cubeGeometry = new BoxGeometry(10, 10, 10);
+          const offsets = [
+            { latDis: 0.0005, lonDis: 0, color: 0xff0000 }, // North (red)
+            { latDis: -0.0005, lonDis: 0, color: 0xffff00 }, // South (yellow)
+            { latDis: 0, lonDis: -0.0005, color: 0x0000ff }, // West (blue)
+            { latDis: 0, lonDis: 0.0005, color: 0x00ff00 }, // East (green)
+          ];
+
+          for (const offset of offsets) {
+            const cube = new Mesh(
+              cubeGeometry,
+              new MeshBasicMaterial({ color: offset.color })
+            );
+            gpsManager.add(
+              cube,
+              e.position.coords.longitude + offset.lonDis,
+              e.position.coords.latitude + offset.latDis
+            );
+          }
+
+          firstFix = false;
+        }
+      });
+
+      gpsManager.startGps();
+
+      // --- FAKE GPS INPUT ---
+      document
+        .getElementById("setFakeLoc")
+        .addEventListener("click", () => {
+          alert("Using fake GPS input (not real GPS).");
+          gpsManager.stopGps();
+          gpsManager.fakeGps(
+            parseFloat(document.getElementById("fakeLon").value),
+            parseFloat(document.getElementById("fakeLat").value)
+          );
+        });
+
+      // --- RENDER LOOP ---
+      renderer.setAnimationLoop(() => {
+        sensors?.update();
+        renderer.render(scene, camera);
+      });
+    </script>
+
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+        font-family: sans-serif;
+      }
+      #gpsinput {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: rgba(255, 255, 255, 0.8);
+        padding: 8px;
+        border-radius: 8px;
+        z-index: 10;
+      }
+      #gpsinput input {
+        width: 140px;
+        margin: 3px 0;
+      }
+      #glscene {
+        width: 100vw;
+        height: 100vh;
+        display: block;
+      }
+    </style>
+  </head>
+
+  <body>
+    <main>
+      <div id="gpsinput">
+        <div><input id="fakeLat" placeholder="Fake Latitude" /></div>
+        <div><input id="fakeLon" placeholder="Fake Longitude" /></div>
+        <div><button id="setFakeLoc">Set Fake Location!</button></div>
+      </div>
+      <canvas id="glscene"></canvas>
+    </main>
+  </body>
+</html>
