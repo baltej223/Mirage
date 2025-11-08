@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { auth } from "../firebase"; // adjust path as needed
-import { Loader2, LogIn } from "lucide-react";
+import { auth } from "../../firebase"; // adjust the path as needed
 
 const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -15,6 +14,7 @@ const Login: React.FC = () => {
     try {
       await signInWithPopup(auth, provider);
       alert("Login successful!");
+      
     } catch (err: any) {
       console.error(err);
       setError(err.message || "Google login failed.");
@@ -24,43 +24,30 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen items-center justify-center bg-gradient-to-br from-indigo-50 to-indigo-100">
-      <div className="w-full max-w-sm p-8 bg-white shadow-2xl rounded-2xl text-center">
-        <h1 className="text-3xl font-semibold text-gray-800 mb-6">
-          Welcome Back
-        </h1>
-        <p className="text-gray-500 mb-8">Sign in with your Google account</p>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+      <div className="p-8 bg-white rounded-2xl shadow-md w-full max-w-sm text-center">
+        <h1 className="text-2xl font-semibold mb-6">Sign in to Continue</h1>
+
+        {error && (
+          <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+            {error}
+          </div>
+        )}
 
         <button
           onClick={handleGoogleLogin}
           disabled={loading}
-          className="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 rounded-lg py-2.5 shadow-sm hover:bg-gray-50 transition disabled:opacity-70"
+          className="flex items-center justify-center gap-3 w-full py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 active:scale-[0.98] transition-all"
         >
-          {loading ? (
-            <>
-              <Loader2 className="animate-spin h-5 w-5 text-indigo-600" />
-              <span className="text-gray-700 font-medium">Signing in...</span>
-            </>
-          ) : (
-            <>
-              <img
-                src="https://www.svgrepo.com/show/475656/google-color.svg"
-                alt="Google"
-                className="h-5 w-5"
-              />
-              <span className="text-gray-700 font-medium">
-                Sign in with Google
-              </span>
-            </>
-          )}
+          <img
+            src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+            alt="Google"
+            className="w-5 h-5"
+          />
+          <span className="font-medium text-gray-700">
+            {loading ? "Signing in..." : "Continue with Google"}
+          </span>
         </button>
-
-        {error && <p className="text-sm text-red-600 mt-4">{error}</p>}
-
-        <div className="mt-8 flex items-center justify-center text-gray-400 text-sm">
-          <LogIn className="w-4 h-4 mr-1" />
-          <span>Powered by Firebase Authentication</span>
-        </div>
       </div>
     </div>
   );
