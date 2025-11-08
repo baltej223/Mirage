@@ -12,7 +12,7 @@ const Login: React.FC = () => {
     const provider = new GoogleAuthProvider();
 
     try {
-      let user = await signInWithPopup(auth, provider);
+      await signInWithPopup(auth, provider);
       alert("Login successful!");
       
     } catch (err: any) {
