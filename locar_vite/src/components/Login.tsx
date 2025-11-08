@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { auth  } from "../../firebase.ts"; // adjust the path as needed
+import { auth } from "../../firebase.ts"; // adjust the path as needed
 
 const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -14,7 +14,6 @@ const Login: React.FC = () => {
     try {
       await signInWithPopup(auth, provider);
       alert("Login successful!");
-      
     } catch (err: any) {
       console.error(err);
       setError(err.message || "Google login failed.");

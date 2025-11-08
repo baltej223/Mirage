@@ -7,13 +7,16 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "prettier": "prettier -c . --write",
+    "prettier:check": "prettier -c . --check"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.17",
     "firebase": "^12.5.0",
     "locar": "^0.1.2",
     "lucide-react": "^0.553.0",
+    "prettier": "^3.6.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.5",
