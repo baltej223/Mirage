@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { auth } from "../../firebase"; // adjust the path as needed
+import { auth  } from "../../firebase.ts"; // adjust the path as needed
 
 const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
