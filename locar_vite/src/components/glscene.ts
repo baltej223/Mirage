@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import * as LocAR from 'locar';
 
 
-import {queryWithinRadius} from "../utils/utils.ts";
+// import {queryWithinRadius} from "../utils/utils.ts";
 
 
 const camera = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 0.001, 1000);

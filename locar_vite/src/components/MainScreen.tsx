@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import renderer from "./glscene";
 import LogoutButton from "./LogoutButton";
 import { useAuth } from "../context/AuthContext";
+import QuestionBox from "./QuestionBox";
 
 export default function MainScreen() {
 
@@ -34,6 +35,7 @@ export default function MainScreen() {
 
   return (
     <>
+      <QuestionBox />
       <LogoutButton />
       <div id="glscene" ref={containerRef} />
     </>
