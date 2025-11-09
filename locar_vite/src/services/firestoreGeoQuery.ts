@@ -17,6 +17,7 @@ interface GeoPoint {
 }
 
 interface LocationDoc {
+  id:string, 
   geohash: string;
   lat: number;
   lng: number;
@@ -43,21 +44,21 @@ export interface NearbyLocation {
 // IDs are fake; geohash can be computed if needed (using geofire-common)
 const MOCK_LOCATIONS: LocationDoc[] = [
   {
-    // id: 'mock-1', // North offset ~20m
+    id: 'mock-1', // North offset ~20m
     geohash: '9q9', // Placeholder (actual: use geoFire.hash([37.7751, -122.4194]))
     lat: 30.353900264615234,
     lng: 76.36834756032006,
     color: 0xff0000, // Red
   },
   {
-    // id: 'mock-2', // South offset ~15m
+    id: 'mock-2', // South offset ~15m
     geohash: '9q9',
     lat: 30.353961610020384,
     lng:   76.36880761995873,
     color: 0xffff00, // Yellow
   },
   {
-    // id: 'mock-3', // East offset ~25m
+    id: 'mock-3', // East offset ~25m
     geohash: '9q9',
     lat: 30.354048629884918,
     lng: 76.36853765450897,
