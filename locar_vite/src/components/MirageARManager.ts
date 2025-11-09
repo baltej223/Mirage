@@ -8,17 +8,19 @@ const QUERY_RADIUS = 25; // meters
 const QUERY_THROTTLE_MS = 5000; // Re-query every 5s on GPS updates
 
 export class MirageARManager {
-  private camera: THREE.PerspectiveCamera;
-  private renderer: THREE.WebGLRenderer;
-  private scene: THREE.Scene;
-  private locar: LocAR.LocationBased;
-  private cam: LocAR.Webcam;
-  private deviceOrientationControls: LocAR.DeviceOrientationControls;
+  private camera!: THREE.PerspectiveCamera;
+  private renderer!: THREE.WebGLRenderer;
+  private scene!: THREE.Scene;
+  private locar!: LocAR.LocationBased;
+  private cam!: LocAR.Webcam;
+  private deviceOrientationControls!: LocAR.DeviceOrientationControls;
   private activeCubes: Map<string, THREE.Mesh> = new Map(); // Track by doc ID
   private lastQueryTime = 0;
   private currentUserPos: { lat: number; lng: number } | null = null;
+  private container: HTMLElement;
 
-  constructor(private container: HTMLElement) {
+  constructor(container: HTMLElement) {
+    this.container = container;
     this.initAR();
   }
 
@@ -103,10 +105,14 @@ export class MirageARManager {
   }
 
   private clearCubes() {
-    this.activeCubes.forEach((mesh, id) => {  // Fixed: forEach avoids iteration TS error
+    this.activeCubes.forEach((mesh) => {  // Fixed: forEach avoids iteration TS error
       this.scene.remove(mesh);  // Fixed: Manual scene remove (no locar.remove)
       mesh.geometry.dispose();
-      mesh.material.dispose();
+      if (Array.isArray(mesh.material)) {
+        mesh.material.forEach(mat => mat.dispose());
+      } else {
+        mesh.material.dispose();
+      }
     });
     this.activeCubes.clear();
   }
