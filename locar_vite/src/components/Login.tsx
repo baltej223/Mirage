@@ -1,22 +1,31 @@
 import React, { useState, useEffect } from "react";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { auth  } from "../../firebase"; // adjust the path as needed
+import { auth } from "../../firebase";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
-  
+  const { user } = useAuth();   // ✅ Get auth state
+
+  // ✅ If user is already logged in → redirect to dashboard
+  useEffect(() => {
+    if (user) {
+      navigate("/"); 
+    }
+  }, [user, navigate]);
+
   const handleGoogleLogin = async () => {
     setLoading(true);
     setError("");
     const provider = new GoogleAuthProvider();
-    
+
     try {
-      await signInWithPopup(auth, provider);
-      alert("Login successful!");
-      logined = true;
+      const result = await signInWithPopup(auth, provider);
+      console.log("Logged in user:", result.user);
+      navigate("/");   // ✅ Redirect here
     } catch (err: any) {
       console.error(err);
       setError(err.message || "Google login failed.");
@@ -24,13 +33,6 @@ const Login: React.FC = () => {
       setLoading(false);
     }
   };
-  if(logined) {
-    const navigate = useNavigate();
-
-    useEffect(() => {
-      navigate("/dashboard"); // redirect to /dashboard
-    }, [navigate]);
-  }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
