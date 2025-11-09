@@ -5,7 +5,7 @@ import { queryWithinRadius } from '../services/firestoreGeoQuery';
 
 const COLLECTION_NAME = 'mirage-locations';
 const QUERY_RADIUS = 25; // meters
-const QUERY_THROTTLE_MS = 0; // Re-query every 5s on GPS updates
+const QUERY_THROTTLE_MS = 5000; // Re-query every 5s on GPS updates
 
 export class MirageARManager {
   private camera!: THREE.PerspectiveCamera;
