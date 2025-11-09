@@ -1,12 +1,17 @@
 import { useEffect, useRef } from "react";
-import renderer from "./glscene.ts";
+import renderer from "./glscene";
+import LogoutButton from "./LogoutButton";
+import { useAuth } from "../context/AuthContext";
 
 export default function MainScreen() {
 
   // Camera and WebGL renderer setup
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
+    console.log(user); // ✅ log user in console
+
     const container = containerRef.current;
     if (!container) return;
 

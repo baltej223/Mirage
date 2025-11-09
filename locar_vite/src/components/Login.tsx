@@ -1,19 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { auth  } from "../../firebase.ts"; // adjust the path as needed
+import { auth  } from "../../firebase"; // adjust the path as needed
 import { useNavigate } from "react-router-dom";
 
 const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  let logined : boolean = false;
+  const navigate = useNavigate();
+  
   const handleGoogleLogin = async () => {
     setLoading(true);
     setError("");
     const provider = new GoogleAuthProvider();
-    const navigate = useNavigate();
-
-    logined = false;
+    
     try {
       await signInWithPopup(auth, provider);
       alert("Login successful!");
