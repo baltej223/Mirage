@@ -2,6 +2,7 @@
 import * as THREE from "three";
 import * as LocAR from "locar"; // Or CDN import as before
 import { queryWithinRadius } from "../services/firestoreGeoQuery";
+import { askQuestion } from "../utils/questionModel";
 
 //const COLLECTION_NAME = "mirage-locations";
 const QUERY_RADIUS = 25; // meters
@@ -18,6 +19,8 @@ export class MirageARManager {
   private lastQueryTime = 0;
   private currentUserPos: { lat: number; lng: number } | null = null;
   private container: HTMLElement;
+  private raycaster = new THREE.Raycaster();
+  private clickVector = new THREE.Vector2();
 
   constructor(container: HTMLElement) {
     this.container = container;
@@ -30,13 +33,18 @@ export class MirageARManager {
       80,
       window.innerWidth / window.innerHeight,
       0.001,
-      1000,
+      1000
     );
 
     // Renderer (mount to container instead of body)
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.container.appendChild(this.renderer.domElement);
+
+    this.renderer.domElement.addEventListener("touchstart", (event) => {
+      this.handleClick(event.touches[0]);
+    });
+    
 
     // Scene & LocAR
     this.scene = new THREE.Scene();
@@ -62,7 +70,7 @@ export class MirageARManager {
 
     // Device Orientation
     this.deviceOrientationControls = new LocAR.DeviceOrientationControls(
-      this.camera,
+      this.camera
     );
     this.deviceOrientationControls.on("deviceorientationgranted", (ev) => {
       ev.target.connect();
@@ -74,7 +82,7 @@ export class MirageARManager {
 
     // GPS Events
     this.locar.on("gpserror", (error) => {
-      alert("Turn on location services, Error: "+ error);
+      alert("Turn on location services, Error: " + error);
     });
     this.locar.on("gpsupdate", (ev) => {
       this.handleGpsUpdate(ev);
@@ -103,7 +111,7 @@ export class MirageARManager {
 
     if (!this.currentUserPos) return;
 
-  /*
+    /*
 insteaderface MirageQueryOptions {
   center: GeoPoint;
   radiusMeters: number;
@@ -118,9 +126,9 @@ insteaderface MirageQueryOptions {
       //collectionName: COLLECTION_NAME,
       center: this.currentUserPos,
       radiusMeters: QUERY_RADIUS,
-      teamId:"somerandomOne",
-      userId:"SomesomerandomOneone",
-      endpoint:"/api/arugh",
+      teamId: "somerandomOne",
+      userId: "SomesomerandomOneone",
+      endpoint: "/api/arugh",
     });
 
     // Add cubes for each
@@ -134,6 +142,40 @@ insteaderface MirageQueryOptions {
 
     // console.log(`Loaded ${nearby.length} mirages within ${QUERY_RADIUS}m`);
     this.lastQueryTime = now;
+  }
+
+  private handleClick(event: MouseEvent | Touch) {
+    const rect = this.renderer.domElement.getBoundingClientRect();
+
+    this.clickVector.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    this.clickVector.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+    this.raycaster.setFromCamera(this.clickVector, this.camera);
+
+    const meshes = Array.from(this.activeCubes.values());
+    const intersects = this.raycaster.intersectObjects(meshes, false);
+
+    if (intersects.length > 0) {
+      const mesh = intersects[0].object as THREE.Mesh;
+
+      const clicked = [...this.activeCubes.entries()].find(([_, m]) => m === mesh);
+      if (clicked) {
+        const [id] = clicked;
+        this.onCubeClicked(id, mesh);
+      }
+    }
+  }
+
+  private onCubeClicked(id: string, mesh: THREE.Mesh) {
+    console.log("Cube clicked:", id);
+
+    mesh.scale.set(6, 6, 6);
+    setTimeout(() => mesh.scale.set(5, 5, 5), 200);
+
+    askQuestion("What is your answer to object " + id + "?")
+    .then((result) => {
+      console.log("User answered:", result);
+    });
   }
 
   private clearCubes() {
