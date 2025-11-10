@@ -92,7 +92,7 @@ export class MirageARManager {
     });
 
     // Add cubes for each
-    const geom = new THREE.BoxGeometry(10, 10, 10); // Shared for perf
+    const geom = new THREE.BoxGeometry(5, 5, 5); // Shared for perf
     for (const loc of nearby) {
       const material = new THREE.MeshBasicMaterial({ color: loc.color });
       const mesh = new THREE.Mesh(geom, material);

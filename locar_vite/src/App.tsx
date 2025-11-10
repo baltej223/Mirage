@@ -1,9 +1,12 @@
 import "./App.css";
-import Login from "./components/Login";
 // import MainScreen from "./components/MainScreen";
 import MirageARView from "./components/MirageARView";
 import { Routes, Route } from "react-router-dom";
 import ProtectedRoute from './components/ProtectedRoute';
+
+import Login from "./components/Login.tsx";
+import LogoutButton from "./components/LogoutButton.tsx"
+
 
 function App() {
   return (
@@ -12,7 +15,9 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/" element={
           <ProtectedRoute>
+            <>
             <MirageARView />
+            </>
           </ProtectedRoute>
           } />
       </Routes>
