@@ -3,7 +3,7 @@ import * as THREE from "three";
 import * as LocAR from "locar"; // Or CDN import as before
 import { queryWithinRadius } from "../services/firestoreGeoQuery";
 
-const COLLECTION_NAME = "mirage-locations";
+//const COLLECTION_NAME = "mirage-locations";
 const QUERY_RADIUS = 25; // meters
 const QUERY_THROTTLE_MS = 5000; // Re-query every 5s on GPS updates
 
@@ -74,7 +74,7 @@ export class MirageARManager {
 
     // GPS Events
     this.locar.on("gpserror", (error) => {
-      alert("Turn on location services");
+      alert("Turn on location services, Error: "+ error);
     });
     this.locar.on("gpsupdate", (ev) => {
       this.handleGpsUpdate(ev);
@@ -103,11 +103,24 @@ export class MirageARManager {
 
     if (!this.currentUserPos) return;
 
+  /*
+insteaderface MirageQueryOptions {
+  center: GeoPoint;
+  radiusMeters: number;
+  teamId: string;
+  userId: string;
+  endpoint?: string; // e.g. "https://your-api.com/api/mirages"
+  useMockData?: boolean; // true → returns MOCK_MIRAGES (offline testing)
+}
+    */
     // Query nearby
     const nearby = await queryWithinRadius({
-      collectionName: COLLECTION_NAME,
+      //collectionName: COLLECTION_NAME,
       center: this.currentUserPos,
       radiusMeters: QUERY_RADIUS,
+      teamId:"somerandomOne",
+      userId:"SomesomerandomOneone",
+      endpoint:"/api/arugh",
     });
 
     // Add cubes for each
