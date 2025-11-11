@@ -136,7 +136,7 @@ insteaderface MirageQueryOptions {
     const geom = new THREE.BoxGeometry(5, 5, 5);
     for (const loc of nearby) {
       this.gltfLoader.load(
-        "../models/ancient_coin_of_the_bevel.glb",
+        "/models/ancient_coin_of_the_bevel.glb",
         (gltf) => {
           const model = gltf.scene;
 
