@@ -171,6 +171,7 @@ insteaderface MirageQueryOptions {
   private onCubeClicked(id: string, mesh: THREE.Mesh) {
     console.log("Cube clicked:", id);
     const cubeData = mesh.userData as NearbyMirage;
+    console.log(JSON.stringify(cubeData));
     this.onCubeClick?.(cubeData);
   }
 

@@ -13,7 +13,7 @@ const QuestionBox: React.FC<QuestionBoxProps> = ({
   onClose,
   setopen,
   initialAnswer = "",
-  question="This is a random quesion"
+  question=""
 
 }) => {
   const [answer, setAnswer] = useState(initialAnswer);
