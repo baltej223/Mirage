@@ -3,9 +3,6 @@ import * as LocAR from "locar"; // Or CDN import as before
 import { queryWithinRadius } from "../services/firestoreGeoQuery";
 import { askQuestion } from "../utils/questionModel";
 
-// @ts-ignore
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-
 //const COLLECTION_NAME = "mirage-locations";
 const QUERY_RADIUS = 25; // meters
 const QUERY_THROTTLE_MS = 5000; // Re-query every 5s on GPS updates
@@ -17,13 +14,12 @@ export class MirageARManager {
   private locar!: LocAR.LocationBased;
   private cam!: LocAR.Webcam;
   private deviceOrientationControls!: LocAR.DeviceOrientationControls;
-  private activeCubes: Map<string, THREE.Object3D> = new Map();
+  private activeCubes: Map<string, THREE.Mesh> = new Map(); // Track by doc ID
   private lastQueryTime = 0;
   private currentUserPos: { lat: number; lng: number } | null = null;
   private container: HTMLElement;
   private raycaster = new THREE.Raycaster();
   private clickVector = new THREE.Vector2();
-  private gltfLoader = new GLTFLoader();
 
   constructor(container: HTMLElement) {
     this.container = container;
@@ -48,16 +44,10 @@ export class MirageARManager {
       this.handleClick(event.touches[0]);
     });
 
+
     // Scene & LocAR
     this.scene = new THREE.Scene();
     this.locar = new LocAR.LocationBased(this.scene, this.camera);
-
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
-    this.scene.add(ambientLight);
-
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
-    directionalLight.position.set(0, 10, 10);
-    this.scene.add(directionalLight);
 
     // Webcam (no explicit start; events trigger auto-init)
     this.cam = new LocAR.Webcam({ video: { facingMode: "environment" } });
@@ -140,45 +130,17 @@ insteaderface MirageQueryOptions {
       endpoint: "/api/arugh",
     });
 
-    const geom = new THREE.BoxGeometry(5, 5, 5);
+    // Add cubes for each
+    const geom = new THREE.BoxGeometry(5, 5, 5); // Shared for perf
     for (const loc of nearby) {
-      this.gltfLoader.load(
-        "/models/ancient_coin_of_the_bevel.glb",
-        (gltf) => {
-          const model = gltf.scene;
-
-          // Optional: scale & rotate
-          model.scale.set(100, 100, 100);
-          model.rotation.y = Math.PI; // face user if needed
-
-          this.locar.add(model, loc.lng, loc.lat);
-          this.activeCubes.set(loc.id, model);
-        },
-        (progress) => console.log(progress.loaded / progress.total),
-        (err) => {
-          console.log("GLB failed, using cube instead", err);
-          const mesh = new THREE.Mesh(
-            geom,
-            new THREE.MeshBasicMaterial({ color: loc.color })
-          );
-          this.locar.add(mesh, loc.lng, loc.lat);
-        }
-      );
+      const material = new THREE.MeshBasicMaterial({ color: loc.color });
+      const mesh = new THREE.Mesh(geom, material);
+      this.locar.add(mesh, loc.lng, loc.lat); // Absolute coords
+      this.activeCubes.set(loc.id, mesh);
     }
 
     // console.log(`Loaded ${nearby.length} mirages within ${QUERY_RADIUS}m`);
     this.lastQueryTime = now;
-  }
-
-  private objectContains(
-    root: THREE.Object3D,
-    target: THREE.Object3D
-  ): boolean {
-    if (root === target) return true;
-    for (const child of root.children) {
-      if (this.objectContains(child, target)) return true;
-    }
-    return false;
   }
 
   private handleClick(event: MouseEvent | Touch) {
@@ -189,51 +151,42 @@ insteaderface MirageQueryOptions {
 
     this.raycaster.setFromCamera(this.clickVector, this.camera);
 
-    const roots = Array.from(this.activeCubes.values());
-    const intersects = this.raycaster.intersectObjects(roots, true);
+    const meshes = Array.from(this.activeCubes.values());
+    const intersects = this.raycaster.intersectObjects(meshes, false);
 
     if (intersects.length > 0) {
-      const mesh = intersects[0].object;
+      const mesh = intersects[0].object as THREE.Mesh;
 
-      const clicked = [...this.activeCubes.entries()].find(([id, root]) =>
-        this.objectContains(root, mesh)
-      );
-
+      const clicked = [...this.activeCubes.entries()].find(([_, m]) => m === mesh);
       if (clicked) {
         const [id] = clicked;
-        this.onCubeClicked(id);
+        this.onCubeClicked(id, mesh);
       }
     }
   }
 
-  private onCubeClicked(id: string) {
+  private onCubeClicked(id: string, mesh: THREE.Mesh) {
     console.log("Cube clicked:", id);
 
-    // mesh.scale.set(6, 6, 6);
-    // setTimeout(() => mesh.scale.set(5, 5, 5), 200);
+    mesh.scale.set(6, 6, 6);
+    setTimeout(() => mesh.scale.set(5, 5, 5), 200);
 
-    askQuestion("What is your answer to object " + id + "?").then((result) => {
+    askQuestion("What is your answer to object " + id + "?")
+    .then((result) => {
       console.log("User answered:", result);
     });
   }
 
   private clearCubes() {
-    this.activeCubes.forEach((root) => {
-      this.scene.remove(root);
-
-      root.traverse((child) => {
-        if ((child as THREE.Mesh).geometry) {
-          (child as THREE.Mesh).geometry.dispose();
-        }
-        if ((child as THREE.Mesh).material) {
-          const material = (child as THREE.Mesh).material;
-          if (Array.isArray(material)) {
-            material.forEach((m) => m.dispose());
-          } else {
-            material.dispose();
-          }
-        }
-      });
+    this.activeCubes.forEach((mesh) => {
+      // Fixed: forEach avoids iteration TS error
+      this.scene.remove(mesh); // Fixed: Manual scene remove (no locar.remove)
+      mesh.geometry.dispose();
+      if (Array.isArray(mesh.material)) {
+        mesh.material.forEach((mat) => mat.dispose());
+      } else {
+        mesh.material.dispose();
+      }
     });
     this.activeCubes.clear();
   }
@@ -255,5 +208,3 @@ insteaderface MirageQueryOptions {
     return this.renderer;
   }
 }
-
-// @ts-ignore
