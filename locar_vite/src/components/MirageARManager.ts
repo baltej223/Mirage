@@ -160,16 +160,16 @@ insteaderface MirageQueryOptions {
       const clicked = [...this.activeCubes.entries()].find(([_, m]) => m === mesh);
       if (clicked) {
         const [id] = clicked;
-        this.onCubeClicked(id, mesh);
+        this.onCubeClicked(id);
       }
     }
   }
 
-  private onCubeClicked(id: string, mesh: THREE.Mesh) {
+  private onCubeClicked(id: string) {
     console.log("Cube clicked:", id);
 
-    mesh.scale.set(6, 6, 6);
-    setTimeout(() => mesh.scale.set(5, 5, 5), 200);
+    // mesh.scale.set(6, 6, 6);
+    // setTimeout(() => mesh.scale.set(5, 5, 5), 200);
 
     askQuestion("What is your answer to object " + id + "?")
     .then((result) => {
