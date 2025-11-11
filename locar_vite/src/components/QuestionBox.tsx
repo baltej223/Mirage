@@ -19,6 +19,7 @@ const QuestionBox: React.FC<QuestionBoxProps> = ({
   const [answer, setAnswer] = useState<string>(initialAnswer || "");
 
   const handleSubmit = () => {
+    console.log("Before Handling the answer to onClose: "+ answer);
     onClose(answer);
     setopen(false);
     setAnswer("");
