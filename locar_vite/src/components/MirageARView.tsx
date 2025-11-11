@@ -27,7 +27,7 @@ const MirageARView: React.FC = () => {
   }, []);
 
   const handleQuestionBoxClose = (answer: any) => {
-    console.log('Answer:', answer);
+    console.log('Answer:'+ answer);
     setIsQuestionBoxOpen(false);
     setSelectedCube(null);
   };

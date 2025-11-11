@@ -26,7 +26,7 @@ const QuestionBox: React.FC<QuestionBoxProps> = ({
   };
 
   const handleCancel = () => {
-    onClose(answer);
+    onClose();
     setopen(false);
     setAnswer("");
   };
