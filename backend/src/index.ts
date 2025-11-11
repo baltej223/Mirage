@@ -3,7 +3,7 @@ import { z } from "zod";
 import { validatePOSTBody } from "./middlewares/validate";
 import User from './user'
 import { db } from './firebase'
-import { collection, query, orderBy, startAt, endAt, getDocs } from 'firebase/firestore'
+import { firestore } from "firebase-admin";
 import * as geo from 'geofire-common'
 
 class PerfMonitor {
@@ -65,17 +65,32 @@ app.post("/api/checkAnswer", validatePOSTBody(checkAnswerRequestSchema), perf.mi
   }
   const questionLocation = [data.location._latitude, data.location._longitude] as [number, number];
   const answeringDistance = geo.distanceBetween(questionLocation, [lat, lng]);
-  if (answeringDistance > VALID_DISTANCE_FOR_ANSWERING_IN_KM) {
-    res.status(404);
-    return res.json({ "error" : "Not found" });
-  }
+  if (answeringDistance > VALID_DISTANCE_FOR_ANSWERING_IN_KM) 
 
+  console.log(answer, data.answer);
   if (answer.toLowerCase() != data.answer.toLowerCase()) {
     res.status(400);
     return res.json({ "error" : "Incorrect" });
   }
 
-  // todo: update points
+  const team = await db.collection('mirage-teams').doc(user.teamId);
+  const teamData = (await team.get()).data();
+  if (!teamData) {
+    res.status(404);
+    return res.json({ "error" : "Not found" });
+  }
+
+  for (const answered_question of teamData.answered_questions) {
+    if (answered_question == questionId) {
+      res.status(404);
+      return res.json({ "error" : "Not found" });
+    }
+  }
+
+  team.update({
+    points: firestore.FieldValue.increment(100),
+    answered_questions: firestore.FieldValue.arrayUnion(questionId)
+  })
 
   return res.json({});
 })
@@ -106,81 +121,6 @@ app.post("/api/getTarget", validatePOSTBody(getTargetRequestSchema), perf.middle
   // Collect all the query results together into a single list
   const snapshots = await Promise.all(promises);
   snapshots.map(x => questions.push(...x.docs))
-    // {
-    //   "_fieldsProto": {
-    //     "location": {
-    //       "geoPointValue": {
-    //         "latitude": 30.3520807,
-    //         "longitude": 76.3688044
-    //       },
-    //       "valueType": "geoPointValue"
-    //     },
-    //     "title": {
-    //       "stringValue": "Parking ",
-    //       "valueType": "stringValue"
-    //     },
-    //     "points": {
-    //       "integerValue": "100",
-    //       "valueType": "integerValue"
-    //     },
-    //     "geohash": {
-    //       "stringValue": "ttqk9v6jdjgv",
-    //       "valueType": "stringValue"
-    //     },
-    //     "createdAt": {
-    //       "timestampValue": {
-    //         "seconds": "1762698862",
-    //         "nanos": 481000000
-    //       },
-    //       "valueType": "timestampValue"
-    //     },
-    //     "createdBy": {
-    //       "stringValue": "Aditya Kumar",
-    //       "valueType": "stringValue"
-    //     },
-    //     "answer": {
-    //       "stringValue": "Seven",
-    //       "valueType": "stringValue"
-    //     },
-    //     "question": {
-    //       "stringValue": "I am an odd number. Take away a letter and I become even. What number am I?",
-    //       "valueType": "stringValue"
-    //     },
-    //     "hint": {
-    //       "stringValue": "Cars Cars Everywhere ",
-    //       "valueType": "stringValue"
-    //     }
-    //   },
-    //   "_ref": {
-    //     "_firestore": {
-    //       "projectId": "saturnalia-dev"
-    //     },
-    //     "_path": {
-    //       "segments": [
-    //         "mirage-locations",
-    //         "tQQt1KLSND7aVCqKp0Tm"
-    //       ],
-    //       "projectId": "saturnalia-dev",
-    //       "databaseId": "(default)"
-    //     },
-    //     "_converter": {}
-    //   },
-    //   "_serializer": {
-    //     "allowUndefined": false
-    //   },
-    //   "_readTime": {
-    //     "_seconds": 1762885871,
-    //     "_nanoseconds": 765988000
-    //   },
-    //   "_createTime": {
-    //     "_seconds": 1762698862,
-    //     "_nanoseconds": 952914000
-    //   },
-    //   "_updateTime": {
-    //     "_seconds": 1762879011,
-    //     "_nanoseconds": 935332000
-    //   }
-    // }
   res.json({
     questions: questions.map(doc => ({
       question: doc._fieldsProto.question.stringValue,
