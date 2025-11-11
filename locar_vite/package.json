@@ -14,6 +14,7 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.1.17",
     "firebase": "^12.5.0",
+    "framer-motion": "^12.23.24",
     "geofire-common": "^6.0.0",
     "locar": "^0.1.2",
     "lucide-react": "^0.553.0",
