@@ -30,16 +30,16 @@ const MirageARView: React.FC = () => {
     };
   }, [user]);
 
-  const handleQuestionBoxClose = async (questionId: string, answer?: string) => {
-    if (answer == undefined) return;
+  const handleQuestionBoxClose = async (questionId?: string, answer?: string) => {
+    if (questionId == undefined || answer == undefined) return;
     console.log('Answer:'+ answer + " " + user);
     console.log('Question ID:'+ questionId);
     await checkAnswer({
       questionId,
       answer,
       userId: user?.uid ?? "user-mar-gya",
-      lat: 0,//"baltej_idhar_lat_dal",
-      lng: 0,//"baltej_idhar_lng_dal",
+      lat: managerRef.current?.ev.position.coords.latitude,
+      lng: managerRef.current?.ev.position.coords.longitude,
     })
     setIsQuestionBoxOpen(false);
     setSelectedCube(null);

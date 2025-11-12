@@ -4,10 +4,10 @@ import React, { useState } from "react";
 type QuestionBoxProps = {
   open: boolean;
   setopen: (open: boolean) => void;
-  onClose: (questionId: string, answer?: string) => void;
+  onClose: (questionId?: string, answer?: string) => void;
   initialAnswer?: string;
   question:string;
-  id:string
+  id:string;
 };
 
 const QuestionBox: React.FC<QuestionBoxProps> = ({
@@ -23,13 +23,13 @@ const QuestionBox: React.FC<QuestionBoxProps> = ({
 
   const handleSubmit = () => {
     console.log("Before Handling the answer to onClose: "+ answer);
-    onClose(answer, id);
+    onClose(id, answer);
     setopen(false);
     setAnswer("");
   };
 
   const handleCancel = () => {
-    onClose("question-id", undefined);
+    onClose();
     setopen(false);
     setAnswer("");
   };

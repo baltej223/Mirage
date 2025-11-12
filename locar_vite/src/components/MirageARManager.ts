@@ -19,10 +19,11 @@ export class MirageARManager {
   private container: HTMLElement;
   private raycaster = new THREE.Raycaster();
   private clickVector = new THREE.Vector2();
-  private onCubeClick?: (cubeData: NearbyMirage) => void;
+  private onCubeClick?: (cubeData: NearbyMirage, ev:any) => void;
   private user: User | null;
+  public ev: any;
 
-  constructor(container: HTMLElement, onCubeClick?: (cubeData: NearbyMirage) => void, user: User | null = null) {
+  constructor(container: HTMLElement, onCubeClick?: (cubeData: NearbyMirage, ev:any) => void, user: User | null = null) {
     this.container = container;
     this.onCubeClick = onCubeClick;
     this.user = user;
@@ -89,6 +90,7 @@ export class MirageARManager {
       alert("Turn on location services, Error: " + error);
     });
     this.locar.on("gpsupdate", (ev) => {
+      this.ev = ev;
       this.handleGpsUpdate(ev);
     });
     this.locar.startGps();
@@ -160,7 +162,7 @@ export class MirageARManager {
     console.log("Cube clicked:", id);
     const cubeData = mesh.userData as NearbyMirage;
     // console.log(JSON.stringify(cubeData));
-    this.onCubeClick?.(cubeData);
+    this.onCubeClick?.(cubeData, this.ev);
   }
 
   private clearCubes() {

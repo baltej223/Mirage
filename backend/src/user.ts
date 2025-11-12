@@ -21,5 +21,5 @@
 import { z } from "zod";
 
 export default z.looseObject({
-  teamId: z.string().regex(/^mirage_/),
+  userId: z.string().length(28, "Invalid user ID"),
 });
