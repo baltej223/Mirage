@@ -111,6 +111,7 @@ export async function checkAnswer({ questionId, answer, userId, lat, lng }: {
 }): Promise<{
   correct: boolean;
   message: string;
+  nextHint?: string;
 }> {
     const response = await fetch(BACKEND_DOMAIN + "/api/checkAnswer", {
       method: "POST",
@@ -127,7 +128,7 @@ export async function checkAnswer({ questionId, answer, userId, lat, lng }: {
         lng,
       }),
     });
-    if (response.ok) return { correct: true, message: "Correct Answer" }
     const body = await response.json();
-    return { correct: false, message: body.error };
+    if (response.ok) return { correct: true, message: "Correct Answer", nextHint: body.nextHint };
+    return { correct: false, message: body.error};
 }

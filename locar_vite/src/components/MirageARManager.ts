@@ -106,6 +106,7 @@ export class MirageARManager {
   }
 
   private async handleGpsUpdate(ev: any) {
+    console.log("UODA")
     const now = Date.now();
     if (now - this.lastQueryTime < QUERY_THROTTLE_MS) return;
 

@@ -34,15 +34,16 @@ const MirageARView: React.FC = () => {
     if (questionId == undefined || answer == undefined) return;
     console.log('Answer:'+ answer + " " + user);
     console.log('Question ID:'+ questionId);
-    await checkAnswer({
+    let reply = await checkAnswer({
       questionId,
       answer,
-      userId: user?.uid ?? "user-mar-gya",
+      userId: user?.uid ?? "user-key-mkc"
       lat: managerRef.current?.ev.position.coords.latitude,
       lng: managerRef.current?.ev.position.coords.longitude,
     })
     setIsQuestionBoxOpen(false);
     setSelectedCube(null);
+    alert(reply?.nextHint);
   };
 
   return (
