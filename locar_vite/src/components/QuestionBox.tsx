@@ -8,6 +8,7 @@ type QuestionBoxProps = {
   initialAnswer?: string;
   question: string;
   id: string;
+  clueMode?: boolean;
 };
 
 const QuestionBox: React.FC<QuestionBoxProps> = ({
@@ -17,6 +18,7 @@ const QuestionBox: React.FC<QuestionBoxProps> = ({
   initialAnswer = "",
   question = "",
   id,
+  clueMode = false,
 }) => {
   const [answer, setAnswer] = useState<string>(initialAnswer || "");
 
@@ -52,27 +54,45 @@ const QuestionBox: React.FC<QuestionBoxProps> = ({
               {question}
             </h3>
 
-            <input
-              type="text"
-              value={answer}
-              onChange={(e) => setAnswer(e.target.value)}
-              className="w-full text-gray-900 bg-white/50 border border-gray-200 rounded-xl px-3 py-2 mb-5 focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder-gray-400 transition-all"
-              placeholder="Type your answer..."
-            />
+            {!clueMode && (
+              <input
+                type="text"
+                value={answer}
+                onChange={(e) => setAnswer(e.target.value)}
+                className="w-full text-gray-900 bg-white/50 border border-gray-200 rounded-xl px-3 py-2 mb-5 focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder-gray-400 transition-all"
+                placeholder="Type your answer..."
+              />
+            )}
 
             <div className="flex gap-3">
-              <button
-                onClick={handleSubmit}
-                className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-500 text-white py-2 rounded-xl font-medium shadow-md hover:shadow-lg hover:from-blue-600 hover:to-indigo-600 transition-all"
-              >
-                Submit
-              </button>
-              <button
-                onClick={handleCancel}
-                className="flex-1 bg-gray-200 text-gray-800 py-2 rounded-xl font-medium hover:bg-gray-300 transition-all"
-              >
-                Cancel
-              </button>
+              {clueMode ? (
+                // 👉 Only ONE button for clue mode
+                <button
+                  onClick={() => {
+                    onClose(id, "CLUE_REQUEST"); // handle clue
+                    setopen(false);
+                  }}
+                  className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-2 rounded-xl font-medium shadow-md hover:shadow-lg transition-all"
+                >
+                  Ok
+                </button>
+              ) : (
+                // 👉 Original submit + cancel UI
+                <>
+                  <button
+                    onClick={handleSubmit}
+                    className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-500 text-white py-2 rounded-xl font-medium shadow-md hover:shadow-lg hover:from-blue-600 hover:to-indigo-600 transition-all"
+                  >
+                    Submit
+                  </button>
+                  <button
+                    onClick={handleCancel}
+                    className="flex-1 bg-gray-200 text-gray-800 py-2 rounded-xl font-medium hover:bg-gray-300 transition-all"
+                  >
+                    Cancel
+                  </button>
+                </>
+              )}
             </div>
 
             {/* Subtle close indicator */}

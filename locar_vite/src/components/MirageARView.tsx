@@ -44,7 +44,18 @@ const MirageARView: React.FC = () => {
     if (reply.correct) {
       setIsQuestionBoxOpen(false);
       setSelectedCube(null);
-      alert("Next hint: " + reply?.nextHint);
+      // alert("Next hint: " + reply?.nextHint);
+      <QuestionBox
+        open={isQuestionBoxOpen}
+        setopen={setIsQuestionBoxOpen}
+        question={reply?.nextHint || "No more hints available."}
+        onClose={() => {
+          setIsQuestionBoxOpen(false);
+          setSelectedCube(null);
+        }}
+        id={"67"}
+        clueMode={true}
+      />;
     } else {
       alert(reply.message);
     }

@@ -184,7 +184,7 @@ app.post(
     if (distanceInM > VALID_DISTANCE_RADIUS) {
       logger.info("404: Out of range");
       res.status(404);
-      return res.json({ error: "Question not found" });
+      return res.json({ error: "Out of range" });
     }
 
     // Get team information
@@ -316,20 +316,14 @@ app.post(
       return distanceInM <= VALID_DISTANCE_RADIUS;
     });
 
-    // Fetch dynamic data (title) from Firestore for nearby questions
-    const questionsWithDetails = await Promise.all(
-      nearbyQuestions.map(async (q) => {
-        const doc = await db.collection("mirage-locations").doc(q.id).get();
-        const data = doc.data();
-        return {
-          id: q.id,
-          title: data?.title || "",
-          question: q.question,
-          lat: q.lat,
-          lng: q.lng,
-        };
-      }),
-    );
+    const questionsWithDetails = nearbyQuestions.map((q) => {
+      return {
+        id: q.id,
+        question: q.question,
+        lat: q.lat,
+        lng: q.lng,
+      };
+    });
 
     logger.info("Sent " + questionsWithDetails.length.toString() + " questions");
     res.json({
