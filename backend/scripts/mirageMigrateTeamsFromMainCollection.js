@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 /**
- * Backs up the entire mirage-teams collection to mirageTeans.json.bak
+ * Backs up the entire mirage-teams collection to mirageTeams.json.bak
  */
 async function backupMirageTeams() {
   console.log("Creating backup of mirage-teams collection...");
@@ -34,7 +34,7 @@ async function backupMirageTeams() {
     });
 
     // Write backup file
-    const backupPath = join(__dirname, "..", "mirageTeans.json.bak");
+    const backupPath = join(__dirname, "..", "scripts", "mirageTeams.json.bak");
     writeFileSync(backupPath, JSON.stringify(backupData, null, 2), "utf8");
     console.log(`✓ Backup written to: ${backupPath}`);
     console.log(`✓ Backed up ${backupData.length} teams.\n`);
