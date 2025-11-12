@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import type { User } from "firebase/auth";
+// import type { User } from "firebase/auth";
 
 type QuestionBoxProps = {
   open: boolean;
@@ -29,7 +29,7 @@ const QuestionBox: React.FC<QuestionBoxProps> = ({
   };
 
   const handleCancel = () => {
-    onClose();
+    onClose("question-id", undefined);
     setopen(false);
     setAnswer("");
   };
