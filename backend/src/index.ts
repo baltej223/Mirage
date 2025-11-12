@@ -95,7 +95,6 @@ const checkAnswerRequestSchema = z.object({
   user: User,
 });
 
-
 /**
  * @route POST /api/checkAnswer
  * @summary Validate a player’s answer for a location-based question
@@ -118,7 +117,6 @@ const checkAnswerRequestSchema = z.object({
  * @returns {object} 404 - `{ error: "Not found" }` if the question, team, or proximity check fails.
  */
 
-
 app.post(
   "/api/checkAnswer",
   validatePOSTBody(checkAnswerRequestSchema),
@@ -134,10 +132,13 @@ app.post(
     }
 
     // AARGH CHECK IF IT IS CORRECT
-    const teamQuery = await db.collection('mirage-teams').where('members', 'array-contains', user.userId).get();
+    const teamQuery = await db
+      .collection("mirage-teams")
+      .where("members", "array-contains", user.userId)
+      .get();
     if (teamQuery.empty) {
       res.status(404);
-      return res.json({ "error": "Team not found" });
+      return res.json({ error: "Team not found" });
     }
     const team = teamQuery?.docs[0]?.ref;
     // ----- Fetching user's team Fisnished -----
@@ -145,15 +146,13 @@ app.post(
 
     if (!teamData) {
       res.status(404);
-      return res.json({ "error": "Not found" });
+      return res.json({ error: "Not found" });
     }
 
     team?.update({
       points: firestore.FieldValue.increment(100),
-      answered_questions: firestore.FieldValue.arrayUnion(questionId)
-    })
-
-
+      answered_questions: firestore.FieldValue.arrayUnion(questionId),
+    });
 
     // const team = db.collection("mirage-teams").doc(user.teamId);
     // const teamData = (await team.get()).data();
@@ -178,81 +177,81 @@ app.post(
       return res.json({ error: "Incorrect" });
     }
 
-      for (const answered_question of teamData.answered_questions) {
-        if (answered_question == questionId) {
-          res.status(404);
-          return res.json({ error: "Not found" });
-        }
+    for (const answered_question of teamData.answered_questions) {
+      if (answered_question == questionId) {
+        res.status(404);
+        return res.json({ error: "Not found" });
       }
+    }
 
-      team?.update({
-        points: firestore.FieldValue.increment(100),
-        answered_questions: firestore.FieldValue.arrayUnion(questionId),
-      });
-
-      return res.json({});
-    },
-    );
-
-    /**
-     * @route POST /api/getTarget
-     * @summary Fetch nearby question targets based on user location
-     * @description
-     * This route is polled every few seconds by the client.
-     * It queries all questions in Firestore within a given radius (default 50m) of the player’s current position.
-     * Uses geofire-common to compute geohash query bounds and merges all query snapshots.
-     *
-     * @param {number} body.lat - Current latitude of the player.
-     * @param {number} body.lng - Current longitude of the player.
-     * @param {User} body.user - The user object (primarily for team context or auth).
-     *
-     * @returns {object} 200 - JSON with nearby questions:
-     * {
-     *   questions: [
-     *     { id, title, question, lat, lng }
-     *   ]
-     * }
-     */
-    app.post(
-      "/api/getTarget",
-      validatePOSTBody(getTargetRequestSchema),
-      perf.middleware("getTarget"),
-      async (req, res) => {
-        const { lat, lng, user } = req.body;
-        const center = [lat, lng];
-        const radiusInM = VALID_DISTANCE_FOR_ANSWERING_IN_KM * 1000;
-
-        const questions = [] as any[];
-
-        // @ts-ignore
-        const bounds = geo.geohashQueryBounds(center, radiusInM);
-        const promises = [];
-        for (const b of bounds) {
-          promises.push(
-            db
-              .collection("mirage-locations")
-              .orderBy("geohash")
-              .startAt(b[0])
-              .endAt(b[1])
-              .get(),
-          );
-        }
-
-        // Collect all the query results together into a single list
-        const snapshots = await Promise.all(promises);
-        snapshots.forEach((x) => questions.push(...x.docs));
-        res.json({
-          questions: questions.map((doc) => ({
-            id: doc._ref._path.segments[1],
-            title: doc._fieldsProto.title.stringValue,
-            question: doc._fieldsProto.question.stringValue,
-            lat: doc._fieldsProto.location.geoPointValue.latitude,
-            lng: doc._fieldsProto.location.geoPointValue.longitude,
-          })),
-        });
-      },
-    );
-
-    app.listen(PORT, () => {
-      logger.info(`${PORT} is now in use`);
+    team?.update({
+      points: firestore.FieldValue.increment(100),
+      answered_questions: firestore.FieldValue.arrayUnion(questionId),
     });
+
+    return res.json({});
+  },
+);
+
+/**
+ * @route POST /api/getTarget
+ * @summary Fetch nearby question targets based on user location
+ * @description
+ * This route is polled every few seconds by the client.
+ * It queries all questions in Firestore within a given radius (default 50m) of the player’s current position.
+ * Uses geofire-common to compute geohash query bounds and merges all query snapshots.
+ *
+ * @param {number} body.lat - Current latitude of the player.
+ * @param {number} body.lng - Current longitude of the player.
+ * @param {User} body.user - The user object (primarily for team context or auth).
+ *
+ * @returns {object} 200 - JSON with nearby questions:
+ * {
+ *   questions: [
+ *     { id, title, question, lat, lng }
+ *   ]
+ * }
+ */
+app.post(
+  "/api/getTarget",
+  validatePOSTBody(getTargetRequestSchema),
+  perf.middleware("getTarget"),
+  async (req, res) => {
+    const { lat, lng, user } = req.body;
+    const center = [lat, lng];
+    const radiusInM = VALID_DISTANCE_FOR_ANSWERING_IN_KM * 1000;
+
+    const questions = [] as any[];
+
+    // @ts-ignore
+    const bounds = geo.geohashQueryBounds(center, radiusInM);
+    const promises = [];
+    for (const b of bounds) {
+      promises.push(
+        db
+          .collection("mirage-locations")
+          .orderBy("geohash")
+          .startAt(b[0])
+          .endAt(b[1])
+          .get(),
+      );
+    }
+
+    // Collect all the query results together into a single list
+    const snapshots = await Promise.all(promises);
+    snapshots.forEach((x) => questions.push(...x.docs));
+    res.json({
+      questions: questions.map((doc) => ({
+        id: doc._ref._path.segments[1],
+        title: doc._fieldsProto.title.stringValue,
+        question: doc._fieldsProto.question.stringValue,
+        lat: doc._fieldsProto.location.geoPointValue.latitude,
+        lng: doc._fieldsProto.location.geoPointValue.longitude,
+      })),
+    });
+  },
+);
+
+app.listen(PORT, () => {
+  logger.info(`${PORT} is now in use`);
+});
