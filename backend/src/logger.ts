@@ -1,4 +1,5 @@
 import pino from "pino";
+import pretty from "pino-pretty";
 import { Writable } from "stream";
 
 const logBuffer: string[] = [];
@@ -14,14 +15,26 @@ const bufferStream = new Writable({
   },
 });
 
+// Create pretty stream for console with custom formatting
+const prettyStream = pretty({
+  colorize: true,
+  translateTime: "HH:MM:ss",
+  ignore: "pid,hostname",
+  messageFormat: "{msg}",
+  customPrettifiers: {
+    time: (timestamp) => `${timestamp}`,
+  },
+  customColors: "info:green,warn:yellow,error:red,debug:blue,trace:gray",
+});
+
 const logger = pino(
   {
     level: "info",
   },
   pino.multistream([
-    { stream: pino.destination("server.log") },
-    { stream: bufferStream },
-    { stream: process.stdout },
+    { stream: pino.destination("server.log") }, // Raw JSON to file
+    { stream: bufferStream }, // Raw JSON to buffer
+    { stream: prettyStream }, // Pretty formatted to console
   ]),
 );
 
