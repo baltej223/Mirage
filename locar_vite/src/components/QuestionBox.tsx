@@ -4,7 +4,7 @@ import type { User } from "firebase/auth";
 type QuestionBoxProps = {
   open: boolean;
   setopen: (open: boolean) => void;
-  onClose: (answer?: string, id?: string) => void;
+  onClose: (questionId: string, answer?: string) => void;
   initialAnswer?: string;
   question:string;
   id:string
