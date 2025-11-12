@@ -34,13 +34,15 @@ async function populateQuestionsCache(): Promise<void> {
 
     questionsCache = snapshot.docs.map((doc) => {
       const data = doc.data();
-      return {
+      const item = {
         id: doc.id,
         lat: data.location.latitude,
         lng: data.location.longitude,
         question: data.question,
         answer: data.answer,
       };
+      logger.info("Loaded " + JSON.stringify(item));
+      return item;
     });
 
     logger.info(
@@ -86,7 +88,6 @@ const getTargetRequestSchema = z.object({
 
 const app = express();
 app.use(cors());
-app.use(pino({ logger }));
 app.use(express.json());
 const PORT = parseInt(process.env.PORT || "3000", 10);
 const perf = new PerfMonitor();
@@ -164,12 +165,14 @@ app.post(
   perf.middleware("checkAnswer"),
   async (req, res) => {
     const { questionId, answer, lat, lng, user } = req.body;
+    logger.info(`/api/checkAnswer: req.body: ${JSON.stringify(req.body)}`)
 
     // Find question in cache
     const question = questionsCache.find((q) => q.id === questionId);
     if (!question) {
+      logger.info("404: Question not found");
       res.status(404);
-      return res.json({ error: "Not found" });
+      return res.json({ error: "Question not found" });
     }
 
     // Check if user is within valid distance using haversine formula
@@ -179,8 +182,9 @@ app.post(
     const distanceInM = distanceInKm * 1000;
 
     if (distanceInM > VALID_DISTANCE_RADIUS) {
+      logger.info("404: Out of range");
       res.status(404);
-      return res.json({ error: "Not found" });
+      return res.json({ error: "Question not found" });
     }
 
     // Get team information
@@ -189,6 +193,7 @@ app.post(
       .where("member_ids", "array-contains", user.userId)
       .get();
     if (teamQuery.empty) {
+      logger.info("404: Team not found");
       res.status(404);
       return res.json({ error: "Team not found" });
     }
@@ -196,18 +201,21 @@ app.post(
     const teamData = (await team?.get())?.data();
 
     if (!teamData) {
+      logger.info("404: Team data not found?");
       res.status(404);
-      return res.json({ error: "Not found" });
+      return res.json({ error: "Team not found" });
     }
 
     // Check if question was already answered
     if (teamData.answered_questions.includes(questionId)) {
+      logger.info("404: Already answered");
       res.status(404);
-      return res.json({ error: "Not found" });
+      return res.json({ error: "Already answered" });
     }
 
     // Check if answer is correct
     if (answer.trim().toLowerCase() !== question.answer.trim().toLowerCase()) {
+      logger.info("400: Incorrect Answer");
       res.status(400);
       return res.json({ error: "Incorrect" });
     }
@@ -218,8 +226,9 @@ app.post(
     const questionData = questionDoc.data();
 
     if (!questionData) {
+      logger.info("404: Question data not found?");
       res.status(404);
-      return res.json({ error: "Not found" });
+      return res.json({ error: "Question not found" });
     }
 
     // Prepare team info to append to question's teams array
@@ -250,19 +259,22 @@ app.post(
       });
     }
 
-    const nextQuestion = await db
+    const nextQuestions = await db
       .collection("mirage-locations")
       .where(FieldPath.documentId(), "not-in", [
         ...teamData.answered_questions,
         questionId,
       ])
-      .limit(1)
+      .limit(5)
       .get();
+    const randomChoice = Math.floor(Math.random() * nextQuestions.size);
 
+
+    logger.info("200: Question answered, awarded " + questionData.points.toString() + " points");
     return res.json({
-      nextHint: nextQuestion.empty
+      nextHint: nextQuestions.empty
         ? "You have answered all available questions!"
-        : nextQuestion.docs[0]!.data().hint,
+        : nextQuestions.docs[randomChoice]!.data().hint,
     });
   },
 );
@@ -292,6 +304,7 @@ app.post(
   perf.middleware("getTarget"),
   async (req, res) => {
     const { lat, lng, user } = req.body;
+    logger.info(`/api/getTarget req.body: ${JSON.stringify(req.body)}`);
     const userCenter: [number, number] = [lat, lng];
 
     // Filter questions within radius using haversine distance
@@ -318,6 +331,7 @@ app.post(
       }),
     );
 
+    logger.info("Sent " + questionsWithDetails.length.toString() + " questions");
     res.json({
       questions: questionsWithDetails,
     });

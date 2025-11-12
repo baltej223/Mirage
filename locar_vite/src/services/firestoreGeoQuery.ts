@@ -88,7 +88,7 @@ export async function queryWithinRadius(mirages: Map<string, NearbyMirage>, {
 
     const data = await response.json();
 
-    for (let i = 0; i < data.questions; i++) {
+    for (let i = 0; i < data.questions.length; i++) {
       const question = data.questions[i] as NearbyMirage;
       if (!mirages.get(question.id)) mirages.set(question.id, question);
     }
