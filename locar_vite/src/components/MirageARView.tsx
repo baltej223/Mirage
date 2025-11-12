@@ -6,7 +6,7 @@ import QuestionBox from "./QuestionBox.tsx";
 import { checkAnswer } from '../services/firestoreGeoQuery';
 import type { NearbyMirage } from '../services/firestoreGeoQuery';
 import { useAuth } from '../context/AuthContext';
-import type { User } from "firebase/auth";
+// import type { User } from "firebase/auth";
 
 const MirageARView: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
