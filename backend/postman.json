@@ -1,0 +1,446 @@
+{
+  "info": {
+    "name": "Mirage Backend API",
+    "description": "Production-ready Mirage backend API with rate limiting, caching, and transaction safety",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "mirage-backend"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "your_28_character_user_id_",
+      "type": "string"
+    },
+    {
+      "key": "questionId",
+      "value": "your_20_char_qid_here",
+      "type": "string"
+    },
+    {
+      "key": "lat",
+      "value": "30.3569",
+      "type": "string"
+    },
+    {
+      "key": "lng",
+      "value": "76.3611",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health & Status",
+      "item": [
+        {
+          "name": "Root - Performance Metrics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": ["{{baseUrl}}"],
+              "path": [""]
+            },
+            "description": "Get server status and performance metrics for all routes"
+          },
+          "response": []
+        },
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Comprehensive health check including:\n- Firestore connectivity\n- Cache status (fresh/stale)\n- Memory usage\n- Performance metrics"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Question Operations",
+      "item": [
+        {
+          "name": "Get Nearby Questions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lat\": {{lat}},\n  \"lng\": {{lng}},\n  \"user\": {\n    \"userId\": \"{{userId}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/getTarget",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "getTarget"]
+            },
+            "description": "Get questions within 50 meters of the user's location.\n\nValidation:\n- Latitude: -90 to 90\n- Longitude: -180 to 180\n- No NaN or Infinity values\n- User ID: 28 characters\n\nRate limit: 100 requests per 15 minutes"
+          },
+          "response": []
+        },
+        {
+          "name": "Check Answer - Correct",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"questionId\": \"{{questionId}}\",\n  \"answer\": \"correct answer\",\n  \"lat\": {{lat}},\n  \"lng\": {{lng}},\n  \"user\": {\n    \"userId\": \"{{userId}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/checkAnswer",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "checkAnswer"]
+            },
+            "description": "Submit an answer for a question.\n\nFeatures:\n- Atomic Firestore batch transaction\n- Distance validation (50m radius)\n- Case-insensitive answer matching\n- Points awarded to team\n- Question points decrease by 10\n\nRate limit: 30 requests per 15 minutes\nTimeout: 10 seconds"
+          },
+          "response": []
+        },
+        {
+          "name": "Check Answer - Incorrect",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"questionId\": \"{{questionId}}\",\n  \"answer\": \"wrong answer\",\n  \"lat\": {{lat}},\n  \"lng\": {{lng}},\n  \"user\": {\n    \"userId\": \"{{userId}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/checkAnswer",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "checkAnswer"]
+            },
+            "description": "Test incorrect answer submission.\n\nExpected: 400 Bad Request\n{\n  \"error\": \"Incorrect\"\n}"
+          },
+          "response": []
+        },
+        {
+          "name": "Check Answer - Out of Range",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"questionId\": \"{{questionId}}\",\n  \"answer\": \"any answer\",\n  \"lat\": 0,\n  \"lng\": 0,\n  \"user\": {\n    \"userId\": \"{{userId}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/checkAnswer",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "checkAnswer"]
+            },
+            "description": "Test answer submission from far away location.\n\nExpected: 404 Not Found\n{\n  \"error\": \"Question not found\"\n}"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Cache Management",
+      "item": [
+        {
+          "name": "Refresh Cache",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/refreshCache?userId={{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "refreshCache"],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{userId}}",
+                  "description": "28-character user ID for authentication"
+                }
+              ]
+            },
+            "description": "Manually refresh the questions cache.\n\nSecurity:\n- Requires valid 28-character userId\n- Verifies user exists in database\n- Rate limit: 5 requests per hour\n\nNote: Cache auto-refreshes every 10 minutes, manual refresh rarely needed."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Validation Tests",
+      "item": [
+        {
+          "name": "Invalid Coordinates - NaN",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lat\": NaN,\n  \"lng\": 76.3611,\n  \"user\": {\n    \"userId\": \"{{userId}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/getTarget",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "getTarget"]
+            },
+            "description": "Test NaN coordinate handling.\n\nExpected: 400 Bad Request with validation error"
+          },
+          "response": []
+        },
+        {
+          "name": "Invalid Coordinates - Out of Bounds",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lat\": 91,\n  \"lng\": 181,\n  \"user\": {\n    \"userId\": \"{{userId}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/getTarget",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "getTarget"]
+            },
+            "description": "Test out-of-bounds coordinates.\n\nExpected: 400 Bad Request\n- Latitude must be between -90 and 90\n- Longitude must be between -180 and 180"
+          },
+          "response": []
+        },
+        {
+          "name": "Invalid Question ID Length",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"questionId\": \"short\",\n  \"answer\": \"test\",\n  \"lat\": {{lat}},\n  \"lng\": {{lng}},\n  \"user\": {\n    \"userId\": \"{{userId}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/checkAnswer",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "checkAnswer"]
+            },
+            "description": "Test invalid question ID length.\n\nExpected: 400 Bad Request\nQuestion ID must be exactly 20 characters"
+          },
+          "response": []
+        },
+        {
+          "name": "Invalid User ID Length",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lat\": {{lat}},\n  \"lng\": {{lng}},\n  \"user\": {\n    \"userId\": \"short\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/getTarget",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "getTarget"]
+            },
+            "description": "Test invalid user ID length.\n\nExpected: 400 Bad Request\nUser ID must be exactly 28 characters"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Rate Limiting Tests",
+      "item": [
+        {
+          "name": "Test General Rate Limit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lat\": {{lat}},\n  \"lng\": {{lng}},\n  \"user\": {\n    \"userId\": \"{{userId}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/getTarget",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "getTarget"]
+            },
+            "description": "Send this request 100+ times rapidly to test rate limiting.\n\nExpected after 100 requests in 15 minutes:\n429 Too Many Requests\n{\n  \"error\": \"Too many requests from this IP, please try again later\"\n}\n\nHeaders:\nX-RateLimit-Limit: 100\nX-RateLimit-Remaining: 0\nX-RateLimit-Reset: [timestamp]"
+          },
+          "response": []
+        },
+        {
+          "name": "Test Strict Rate Limit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"questionId\": \"{{questionId}}\",\n  \"answer\": \"test\",\n  \"lat\": {{lat}},\n  \"lng\": {{lng}},\n  \"user\": {\n    \"userId\": \"{{userId}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/checkAnswer",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "checkAnswer"]
+            },
+            "description": "Send this request 30+ times rapidly to test strict rate limiting.\n\nExpected after 30 requests in 15 minutes:\n429 Too Many Requests\n\nRate limit: 30 requests per 15 minutes"
+          },
+          "response": []
+        },
+        {
+          "name": "Test Cache Refresh Rate Limit",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/refreshCache?userId={{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "refreshCache"],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{userId}}"
+                }
+              ]
+            },
+            "description": "Send this request 5+ times rapidly to test cache refresh rate limiting.\n\nExpected after 5 requests in 1 hour:\n429 Too Many Requests\n{\n  \"error\": \"Cache refresh rate limit exceeded\"\n}"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Error Scenarios",
+      "item": [
+        {
+          "name": "404 - Invalid Route",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/nonexistent",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "nonexistent"]
+            },
+            "description": "Test 404 handler for non-existent routes.\n\nExpected: 404 Not Found\n{\n  \"error\": \"Route GET /api/nonexistent not found\"\n}"
+          },
+          "response": []
+        },
+        {
+          "name": "401 - Unauthorized Cache Refresh",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/refreshCache?userId=invalid",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "refreshCache"],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "invalid"
+                }
+              ]
+            },
+            "description": "Test unauthorized cache refresh.\n\nExpected: 401 Unauthorized\n{\n  \"error\": \"Valid userId required for cache refresh authentication\"\n}"
+          },
+          "response": []
+        },
+        {
+          "name": "404 - Question Not Found",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"questionId\": \"nonexistent_question_\",\n  \"answer\": \"test\",\n  \"lat\": {{lat}},\n  \"lng\": {{lng}},\n  \"user\": {\n    \"userId\": \"{{userId}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/checkAnswer",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "checkAnswer"]
+            },
+            "description": "Test non-existent question.\n\nExpected: 404 Not Found\n{\n  \"error\": \"Question not found\"\n}"
+          },
+          "response": []
+        },
+        {
+          "name": "404 - Team Not Found",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"questionId\": \"{{questionId}}\",\n  \"answer\": \"test\",\n  \"lat\": {{lat}},\n  \"lng\": {{lng}},\n  \"user\": {\n    \"userId\": \"nonexistent_user_id_000000\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/checkAnswer",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "checkAnswer"]
+            },
+            "description": "Test non-existent user/team.\n\nExpected: 404 Not Found\n{\n  \"error\": \"Team not found\"\n}"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

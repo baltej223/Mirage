@@ -22,6 +22,12 @@ interface QuestionData {
 }
 
 let questionsCache: QuestionData[] = [];
+let cacheLastPopulated: Date | null = null;
+
+// Duplicate submission prevention - stores recent submissions
+// Key format: "userId:questionId", Value: timestamp
+const recentSubmissions = new Map<string, number>();
+const SUBMISSION_COOLDOWN_MS = 3000; // 3 seconds cooldown
 
 /**
  * Populates the questionsCache with all questions from Firestore
@@ -45,11 +51,13 @@ async function populateQuestionsCache(): Promise<void> {
       return item;
     });
 
+    cacheLastPopulated = new Date();
     logger.info(
       `Questions cache populated with ${questionsCache.length} questions`,
     );
   } catch (error) {
     logger.error({ error }, "Error populating questions cache");
+    cacheLastPopulated = null;
     throw error;
   }
 }
@@ -81,8 +89,8 @@ class PerfMonitor {
 }
 
 const getTargetRequestSchema = z.object({
-  lat: z.float64(),
-  lng: z.float64(),
+  lat: z.number().min(-90, "Invalid latitude").max(90, "Invalid latitude"),
+  lng: z.number().min(-180, "Invalid longitude").max(180, "Invalid longitude"),
   user: User,
 });
 
@@ -100,8 +108,22 @@ const perf = new PerfMonitor();
  * @returns {object} 200 - JSON object containing `{ status: "online" }` and averaged route timings.
  */
 app.get("/", (req, res) => {
+  const cacheHealth = {
+    size: questionsCache.length,
+    healthy: questionsCache.length > 0,
+    lastPopulated: cacheLastPopulated ? cacheLastPopulated.toISOString() : "Never",
+  };
+  
+  if (questionsCache.length === 0) {
+    logger.warn({
+      warning: "Cache is empty",
+      timestamp: new Date().toISOString()
+    });
+  }
+  
   res.json({
     status: "online",
+    cache: cacheHealth,
     ...perf.data,
   });
 });
@@ -130,10 +152,10 @@ app.get("/logs", (req, res) => {
 });
 
 const checkAnswerRequestSchema = z.object({
-  questionId: z.string().length(20, "Invalid Id"),
-  answer: z.string(),
-  lat: z.float64(),
-  lng: z.float64(),
+  questionId: z.string().length(20, "Invalid question ID format"),
+  answer: z.string().min(1, "Answer cannot be empty"),
+  lat: z.number().min(-90, "Invalid latitude").max(90, "Invalid latitude"),
+  lng: z.number().min(-180, "Invalid longitude").max(180, "Invalid longitude"),
   user: User,
 });
 
@@ -167,10 +189,47 @@ app.post(
     const { questionId, answer, lat, lng, user } = req.body;
     logger.info(`/api/checkAnswer: req.body: ${JSON.stringify(req.body)}`)
 
+    // Check for duplicate submission
+    const submissionKey = `${user.userId}:${questionId}`;
+    const lastSubmissionTime = recentSubmissions.get(submissionKey);
+    const now = Date.now();
+    
+    if (lastSubmissionTime && (now - lastSubmissionTime) < SUBMISSION_COOLDOWN_MS) {
+      const remainingCooldown = Math.ceil((SUBMISSION_COOLDOWN_MS - (now - lastSubmissionTime)) / 1000);
+      logger.warn({
+        warning: "Duplicate submission blocked",
+        userId: user.userId,
+        questionId,
+        cooldownRemaining: remainingCooldown,
+        timestamp: new Date().toISOString()
+      });
+      res.status(429);
+      return res.json({ 
+        error: "Too many requests", 
+        message: `Please wait ${remainingCooldown} second(s) before submitting again.` 
+      });
+    }
+    
+    // Record this submission attempt
+    recentSubmissions.set(submissionKey, now);
+    
+    // Clean up old entries (older than 10 seconds)
+    for (const [key, timestamp] of recentSubmissions.entries()) {
+      if (now - timestamp > 10000) {
+        recentSubmissions.delete(key);
+      }
+    }
+
     // Find question in cache
     const question = questionsCache.find((q) => q.id === questionId);
     if (!question) {
-      logger.info("404: Question not found");
+      logger.error({
+        error: "Question not found in cache",
+        questionId,
+        userId: user.userId,
+        cacheSize: questionsCache.length,
+        timestamp: new Date().toISOString()
+      });
       res.status(404);
       return res.json({ error: "Question not found" });
     }
@@ -182,9 +241,22 @@ app.post(
     const distanceInM = distanceInKm * 1000;
 
     if (distanceInM > VALID_DISTANCE_RADIUS) {
-      logger.info("404: Out of range");
+      logger.warn({
+        error: "User out of range",
+        questionId,
+        userId: user.userId,
+        userPosition: { lat, lng },
+        questionPosition: { lat: question.lat, lng: question.lng },
+        distance: Math.round(distanceInM),
+        requiredDistance: VALID_DISTANCE_RADIUS,
+        timestamp: new Date().toISOString()
+      });
       res.status(404);
-      return res.json({ error: "Question not found" });
+      return res.json({ 
+        error: "Out of range",
+        message: `You are ${Math.round(distanceInM)}m away. Please move within ${VALID_DISTANCE_RADIUS}m of the target.`,
+        distance: Math.round(distanceInM)
+      });
     }
 
     // Get team information
@@ -193,24 +265,42 @@ app.post(
       .where("member_ids", "array-contains", user.userId)
       .get();
     if (teamQuery.empty) {
-      logger.info("404: Team not found");
+      logger.error({
+        error: "Team not found for user",
+        userId: user.userId,
+        questionId,
+        timestamp: new Date().toISOString()
+      });
       res.status(404);
-      return res.json({ error: "Team not found" });
+      return res.json({ error: "Team not found", message: "You are not part of any team. Please join a team first." });
     }
     const team = teamQuery?.docs[0]?.ref;
     const teamData = (await team?.get())?.data();
 
     if (!teamData) {
-      logger.info("404: Team data not found?");
+      logger.error({
+        error: "Team data retrieval failed",
+        userId: user.userId,
+        teamId: team?.id,
+        questionId,
+        timestamp: new Date().toISOString()
+      });
       res.status(404);
-      return res.json({ error: "Team not found" });
+      return res.json({ error: "Team not found", message: "Team data could not be retrieved. Please try again." });
     }
 
     // Check if question was already answered
     if (teamData.answered_questions.includes(questionId)) {
-      logger.info("404: Already answered");
-      res.status(404);
-      return res.json({ error: "Already answered" });
+      logger.info({
+        error: "Question already answered",
+        questionId,
+        userId: user.userId,
+        teamId: team?.id,
+        teamName: teamData.teamName,
+        timestamp: new Date().toISOString()
+      });
+      res.status(409);
+      return res.json({ error: "Already answered", message: "Your team has already answered this question." });
     }
 
     // Check if answer is correct
@@ -226,9 +316,15 @@ app.post(
     const questionData = questionDoc.data();
 
     if (!questionData) {
-      logger.info("404: Question data not found?");
+      logger.error({
+        error: "Question data not found in Firestore",
+        questionId,
+        userId: user.userId,
+        teamId: team?.id,
+        timestamp: new Date().toISOString()
+      });
       res.status(404);
-      return res.json({ error: "Question not found" });
+      return res.json({ error: "Question not found", message: "Question data could not be retrieved from the database." });
     }
 
     // Prepare team info to append to question's teams array
@@ -270,7 +366,16 @@ app.post(
     const randomChoice = Math.floor(Math.random() * nextQuestions.size);
 
 
-    logger.info("200: Question answered, awarded " + questionData.points.toString() + " points");
+    logger.info({
+      message: "Question answered successfully",
+      questionId,
+      userId: user.userId,
+      teamId: team?.id,
+      teamName: teamData.teamName,
+      pointsAwarded: questionData.points,
+      userPosition: { lat, lng },
+      timestamp: new Date().toISOString()
+    });
     return res.json({
       nextHint: nextQuestions.empty
         ? "You have answered all available questions!"
