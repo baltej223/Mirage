@@ -12,12 +12,15 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@types/cors": "^2.8.19",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "firebase": "^12.5.0",
     "firebase-admin": "^13.6.0",
     "geofire-common": "^6.0.0",
+    "pino": "^10.1.0",
+    "pino-http": "^11.0.0",
     "typescript": "^5.9.3",
     "zod": "^4.1.12"
   },

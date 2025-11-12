@@ -2,8 +2,7 @@ import { ZodObject, ZodError } from "zod";
 import { Request, Response, NextFunction } from "express";
 
 export const validate =
-  (schema: ZodObject) =>
-  (req: Request, res: Response, next: NextFunction) => {
+  (schema: ZodObject) => (req: Request, res: Response, next: NextFunction) => {
     try {
       schema.parse({
         body: req.body,
@@ -23,8 +22,7 @@ export const validate =
   };
 
 export const validatePOSTBody =
-  (schema: ZodObject) =>
-  (req: Request, res: Response, next: NextFunction) => {
+  (schema: ZodObject) => (req: Request, res: Response, next: NextFunction) => {
     try {
       schema.parse(req.body);
       next();

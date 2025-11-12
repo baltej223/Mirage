@@ -22,4 +22,4 @@ import { z } from "zod";
 
 export default z.looseObject({
   teamId: z.string().regex(/^mirage_/),
-})
+});
