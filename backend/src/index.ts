@@ -63,21 +63,25 @@ app.post("/api/checkAnswer", validatePOSTBody(checkAnswerRequestSchema), perf.mi
     res.status(404);
     return res.json({ "error" : "Not found" });
   }
+
+  const team = db.collection('mirage-teams').doc(user.teamId);
+  const teamData = (await team.get()).data();
+  if (!teamData) {
+    res.status(404);
+    return res.json({ "error" : "Not found" });
+  }
+
   const questionLocation = [data.location._latitude, data.location._longitude] as [number, number];
   const answeringDistance = geo.distanceBetween(questionLocation, [lat, lng]);
-  if (answeringDistance > VALID_DISTANCE_FOR_ANSWERING_IN_KM) 
+  if (answeringDistance > VALID_DISTANCE_FOR_ANSWERING_IN_KM)  {
+    res.status(404);
+    return res.json({ "error" : "Not found" });
+  }
 
   console.log(answer, data.answer);
   if (answer.toLowerCase() != data.answer.toLowerCase()) {
     res.status(400);
     return res.json({ "error" : "Incorrect" });
-  }
-
-  const team = await db.collection('mirage-teams').doc(user.teamId);
-  const teamData = (await team.get()).data();
-  if (!teamData) {
-    res.status(404);
-    return res.json({ "error" : "Not found" });
   }
 
   for (const answered_question of teamData.answered_questions) {
@@ -120,9 +124,11 @@ app.post("/api/getTarget", validatePOSTBody(getTargetRequestSchema), perf.middle
 
   // Collect all the query results together into a single list
   const snapshots = await Promise.all(promises);
-  snapshots.map(x => questions.push(...x.docs))
+  snapshots.forEach(x => questions.push(...x.docs))
   res.json({
     questions: questions.map(doc => ({
+      id: doc._ref._path.segments[1],
+      title: doc._fieldsProto.title.stringValue,
       question: doc._fieldsProto.question.stringValue,
       lat: doc._fieldsProto.location.geoPointValue.latitude,
       lng: doc._fieldsProto.location.geoPointValue.longitude,

@@ -1,11 +1,9 @@
 import * as THREE from "three";
-import * as LocAR from "locar"; // Or CDN import as before
+import * as LocAR from "locar";
 import { queryWithinRadius } from "../services/firestoreGeoQuery";
 import type { NearbyMirage } from "../services/firestoreGeoQuery";
 
-//const COLLECTION_NAME = "mirage-locations";
-const QUERY_RADIUS = 25; // meters
-const QUERY_THROTTLE_MS = 5000; // Re-query every 5s on GPS updates
+const QUERY_THROTTLE_MS = 5000;
 
 export class MirageARManager {
   private camera!: THREE.PerspectiveCamera;
@@ -100,50 +98,32 @@ export class MirageARManager {
 
   private async handleGpsUpdate(ev: any) {
     const now = Date.now();
-    if (now - this.lastQueryTime < QUERY_THROTTLE_MS) return; // Throttle
+    if (now - this.lastQueryTime < QUERY_THROTTLE_MS) return;
 
     this.currentUserPos = {
       lat: ev.position.coords.latitude,
       lng: ev.position.coords.longitude,
     };
 
-    // Clear old cubes
     this.clearCubes();
 
     if (!this.currentUserPos) return;
-
-    /*
-insteaderface MirageQueryOptions {
-  center: GeoPoint;
-  radiusMeters: number;
-  teamId: string;
-  userId: string;
-  endpoint?: string; // e.g. "https://your-api.com/api/mirages"
-  useMockData?: boolean; // true → returns MOCK_MIRAGES (offline testing)
-}
-    */
-    // Query nearby
     const nearby = await queryWithinRadius({
-      //collectionName: COLLECTION_NAME,
       center: this.currentUserPos,
-      radiusMeters: QUERY_RADIUS,
-      teamId: "somerandomOne",
-      userId: "SomesomerandomOneone",
-      endpoint: "/api/arugh", 
+      teamId: "baltej_idhar_teamId_dal",
+      userId: "baltej_dihar_userId_dal",
     });
 
-    // Add cubes for each
-    const geom = new THREE.BoxGeometry(3, 3, 3); // Shared for perf
+    const geom = new THREE.BoxGeometry(3, 3, 3); 
     for (const loc of nearby) {
-      const material = new THREE.MeshBasicMaterial({ color: loc.color });
+      const material = new THREE.MeshBasicMaterial({ color: Math.random() * 0xffffff });
       const mesh = new THREE.Mesh(geom, material);
-      mesh.userData = loc; // Store full cube data
-      this.locar.add(mesh, loc.lng, loc.lat); // Absolute coords
+      mesh.userData = loc;
+      this.locar.add(mesh, loc.lng, loc.lat);
       this.activeCubes.set(loc.id, mesh);
     }
 
-    // console.log(`Loaded ${nearby.length} mirages within ${QUERY_RADIUS}m`);
-    this.lastQueryTime = now;
+    this.lastQueryTime = Date.now();
   }
 
   private handleClick(event: MouseEvent | Touch) {
@@ -188,12 +168,9 @@ insteaderface MirageQueryOptions {
     this.activeCubes.clear();
   }
 
-  // Cleanup (call on unmount)
   destroy() {
     this.clearCubes();
-    // Removed window.removeEventListener - anonymous func; re-add named if needed
-    this.locar.stopGps?.(); // Optional chaining for safety
-    // Removed this.cam.stop?.(); - no method
+    this.locar.stopGps?.();
     this.deviceOrientationControls.disconnect?.();
     this.renderer.dispose();
     if (this.container.contains(this.renderer.domElement)) {

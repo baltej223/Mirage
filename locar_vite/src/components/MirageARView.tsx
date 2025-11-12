@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { MirageARManager } from './MirageARManager.ts';
 import LogoutButton from './LogoutButton.tsx';
 import QuestionBox from "./QuestionBox.tsx";
+import { checkAnswer } from '../services/firestoreGeoQuery';
 import type { NearbyMirage } from '../services/firestoreGeoQuery';
 
 const MirageARView: React.FC = () => {
@@ -26,8 +27,16 @@ const MirageARView: React.FC = () => {
     };
   }, []);
 
-  const handleQuestionBoxClose = (answer: any) => {
-    console.log('Answer:'+ answer);
+  const handleQuestionBoxClose = async (answer: string | undefined) => {
+    if (answer == undefined) return;
+    console.log('Answer:', answer);
+    await checkAnswer({
+      questionId: "baltej_idhar_question_id_dal",
+      answer,
+      teamId: "baltej_idhar_team_id_dal",
+      lat: 0,//"baltej_idhar_lat_dal",
+      lng: 0,//"baltej_idhar_lng_dal",
+    })
     setIsQuestionBoxOpen(false);
     setSelectedCube(null);
   };
