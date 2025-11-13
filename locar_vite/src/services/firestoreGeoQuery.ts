@@ -47,8 +47,6 @@ interface MirageQueryOptions {
 
 // Use environment variable with fallback for development
 const BACKEND_DOMAIN = import.meta.env.VITE_BACKEND_URL || "http://10.223.141.252:3000";
-// Use environment variable with fallback for development
-const BACKEND_DOMAIN = import.meta.env.VITE_BACKEND_URL || "http://10.223.141.252:3000";
 
 export async function queryWithinRadius(mirages: Map<string, NearbyMirage>, {
   center,
@@ -110,8 +108,6 @@ export async function checkAnswer({ questionId, answer, userId, lat, lng }: {
 }): Promise<{
   correct: false;
   message: string;
-  errorType?: string;
-  distance?: number;
   errorType?: string;
   distance?: number;
 } | {
