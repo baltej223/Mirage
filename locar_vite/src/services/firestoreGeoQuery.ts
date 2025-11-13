@@ -73,9 +73,7 @@ export async function queryWithinRadius(mirages: Map<string, NearbyMirage>, {
       },
       ...center,
     };
-    if (IS_DEV) {
-      console.log(BACKEND_DOMAIN + endpoint, 'and payload:', payload.user.userId);
-    }
+
 
     const response = await fetch(BACKEND_DOMAIN + endpoint, {
       method: "POST",
@@ -95,6 +93,7 @@ export async function queryWithinRadius(mirages: Map<string, NearbyMirage>, {
       const question = data.questions[i] as NearbyMirage;
       if (!mirages.get(question.id)) mirages.set(question.id, question);
     }
+    
   } catch (err) {
     console.error("Mirage API error:", err);
   }
