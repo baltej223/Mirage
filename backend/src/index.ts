@@ -385,7 +385,7 @@ app.get(
   perf.middleware("leaderboard"),
   async (req, res) => {
     logger.info(`/api/leaderboard`);
-    const teams = await db.collection('mirage-teams').orderBy('points').limit(10).get();
+    const teams = await db.collection('mirage-teams').orderBy('points', 'desc').limit(10).get();
     const docs = teams.docs.map(x => x.data());
     res.json({
       teams: docs.map(x => ({
