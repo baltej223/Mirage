@@ -175,7 +175,7 @@ app.post(
     const distanceInKm = geo.distanceBetween(userCenter, questionCenter);
     const distanceInM = distanceInKm * 1000;
 
-    if (distanceInM > VALID_DISTANCE_RADIUS) {
+    if (distanceInM > (VALID_DISTANCE_RADIUS + 100)) {
       logger.info("404: Out of range");
       res.status(404);
       return res.json({ error: "Out of range" });
