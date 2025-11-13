@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mirage-frontend
+  namespace: mirage
+spec:
+  selector:
+    app: mirage-frontend
+  ports:
+  - port: 80
+    targetPort: 5173
+  type: LoadBalancer
+
