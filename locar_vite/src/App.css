@@ -1,1 +1,17 @@
 @import "tailwindcss";
+
+/* Background for the login page */
+.login-bg {
+	background-image: url('/background.png');
+	background-repeat: no-repeat;
+	background-size: cover;
+	background-position: center center;
+	min-height: 100vh;
+	/* fallback color while image loads */
+	background-color: #f3f4f6;
+}
+
+/* Optional: dim the background slightly for better contrast */
+.login-bg .login-panel {
+	background-color: rgba(255,255,255,0.9);
+}

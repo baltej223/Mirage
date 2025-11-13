@@ -42,8 +42,8 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
-      <div className="p-8 bg-white rounded-2xl shadow-md w-full max-w-sm text-center">
+    <div className="login-bg flex flex-col items-center justify-center">
+      <div className="login-panel p-8 rounded-2xl shadow-md w-full max-w-sm text-center">
         <h1 className="text-2xl font-semibold mb-6">Sign in to Continue</h1>
 
         {error && (
