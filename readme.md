@@ -1,4 +1,4 @@
-# Mirage-demo: Detailed Maintainer Guide
+# Mirage: Detailed Maintainer Guide
 
 This README explains the codebase structure, routes, major functions, components, and operational details for maintainers of the Mirage-demo project. The project is split into two main pieces:
 
