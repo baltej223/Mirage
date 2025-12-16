@@ -8,7 +8,7 @@ dotenv.config();
 const serviceAccountKeyBase64 = process.env.SERVICE_ACCOUNT_KEY_BASE64;
 
 if (!serviceAccountKeyBase64) {
-  throw new Error("bc service account key hi nhi hai");
+  throw new Error("Service Account key is not Available.");
 }
 
 const serviceAccountKeyJson = Buffer.from(
